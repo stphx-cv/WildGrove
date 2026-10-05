@@ -10,7 +10,7 @@ Lo que hay que saber para no equivocarse con el repositorio.
 
 ## El repositorio y la rama
 
-`stphx-cv/WildGrove` en GitHub, **público**. Ver [Cómo versionar este proyecto](04-versioning.md#el-repositorio-es-público).
+`stphx-cv/wildgrove` en GitHub, **público**. Ver [Cómo versionar este proyecto](04-versioning.md#el-repositorio-es-público).
 
 **`production` es la única rama del proyecto.** No se crean ramas de versión ni de entorno.
 
@@ -19,7 +19,7 @@ El nombre dice de dónde sale lo que está desplegado, y nada más. **No dice en
 Tampoco hay una segunda rama para las versiones estables. Con un solo desarrollador, dos ramas de larga vida quedan idénticas en cuanto se fusionan, y la que se queda atrás acaba mintiendo sobre qué es estable. Lo que marca una versión es su etiqueta, que no se mueve nunca.
 
 ```bash
-git clone https://github.com/stphx-cv/WildGrove.git
+git clone https://github.com/stphx-cv/wildgrove.git
 ```
 
 ## Quién sube los cambios

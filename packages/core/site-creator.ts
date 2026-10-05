@@ -19,7 +19,7 @@ export function getSiteCreatorWhatsAppUrl(locale: string): string {
 }
 
 /** The source code, linked from the Terms page. Private until the project goes public. */
-export const SITE_REPO_URL = "https://github.com/stphx-cv/WildGrove"
+export const SITE_REPO_URL = "https://github.com/stphx-cv/wildgrove"
 
 /**
  * Profile photo on About → Sobre mí.
