@@ -1,0 +1,13 @@
+@import "tailwindcss";
+@import "@wildgrove/ui/styles/tokens.css";
+
+/* Tailwind v4 must scan the shared package or @wildgrove/ui ships unstyled. */
+@source "../../packages/ui";
+/* core too: it exports class-name constants (PDF_DOWNLOAD_LINK_CLASSNAME,
+   contact-channel-layout). Unscanned, they resolve to nothing at runtime. */
+@source "../../packages/core";
+
+/* ── Admin shell ──────────────────────────────────────────────── */
+.admin-shell {
+  min-height: 100vh;
+}

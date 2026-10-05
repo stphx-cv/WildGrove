@@ -1,0 +1,126 @@
+@import "tailwindcss";
+@import "@wildgrove/ui/styles/tokens.css";
+
+/* Tailwind v4 must scan the shared package or @wildgrove/ui ships unstyled. */
+@source "../../packages/ui";
+/* Same for core: contact-channel-layout.ts builds class names there. Without
+   this, a width it had never emitted before silently resolved to nothing —
+   the contact cards stacked one per row for a whole release. */
+@source "../../packages/core";
+
+/* ══════════════════════════════════════════════════════════════════
+   COMPONENT LAYER
+   ══════════════════════════════════════════════════════════════════ */
+@layer components {
+
+  /* ── Consistent section padding ── */
+  .section-padding {
+    padding-left: 1rem;
+    padding-right: 1rem;
+    padding-top: 4rem;
+    padding-bottom: 4rem;
+  }
+
+  @media (min-width: 640px) {
+    .section-padding {
+      padding-left: 1.5rem;
+      padding-right: 1.5rem;
+    }
+  }
+
+  @media (min-width: 768px) {
+    .section-padding {
+      padding-top: 6rem;
+      padding-bottom: 6rem;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .section-padding {
+      padding-left: 2rem;
+      padding-right: 2rem;
+    }
+  }
+
+  /* ── Grain texture overlay ── */
+  .grain-overlay {
+    position: relative;
+  }
+
+  .grain-overlay::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: url('/svg/noise.svg');
+    background-repeat: repeat;
+    opacity: 0.03;
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  /* ── Entrance animations — start invisible ── */
+  .animate-fade-up,
+  .animate-fade-in {
+    opacity: 0;
+  }
+
+  /* ── Hero image ──
+     The hero background image is the LCP element. It must paint as soon as it
+     loads — an opacity fade-in here delays the *measured* LCP (a documented
+     anti-pattern), so the image is shown immediately with no entrance animation. */
+
+
+  /* ── Scroll-triggered animation ── */
+  [data-animate] {
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 0.6s ease, transform 0.6s ease;
+  }
+
+  [data-animate].in-view {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  /* ── Max-width content container ── */
+  .content-wrapper {
+    max-width: 80rem;
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+
+  @media (min-width: 640px) {
+    .content-wrapper {
+      padding-left: 1.5rem;
+      padding-right: 1.5rem;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .content-wrapper {
+      padding-left: 2rem;
+      padding-right: 2rem;
+    }
+  }
+}
+
+/* ── Reduced motion ──
+   Outside the layers on purpose: the animation comes from the animate-*
+   utilities, and only unlayered CSS wins over them. These elements start
+   invisible, so the guard leaves them visible as well as still, like the
+   guards in tokens.css. The hero image never animates either way. */
+@media (prefers-reduced-motion: reduce) {
+  .animate-fade-up,
+  .animate-fade-in {
+    opacity: 1;
+    animation: none;
+  }
+
+  [data-animate] {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+}

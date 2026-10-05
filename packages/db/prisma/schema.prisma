@@ -1,0 +1,880 @@
+// ══════════════════════════════════════════════════════════════════
+// Wild Grove — Database Schema
+// Managed by Prisma · PostgreSQL
+// ══════════════════════════════════════════════════════════════════
+
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ── User Profile ────────────────────────────────────────────────
+// Extends InsForge Auth — user identity lives in auth.users
+model Profile {
+  id           String        @id // matches auth.users.id (UUID)
+  name         String?
+  firstName    String?
+  lastName     String?
+  username     String?       @unique
+  email            String?        @unique
+  recoveryEmails   String[]       @default([])
+  recoveryPhones   String[]       @default([])
+  phoneCountryCode String?
+  phoneNumber      String?
+  avatarUrl        String?
+  role         Role          @default(CUSTOMER)
+  connections  AuthProvider[] @default([])
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  reservations       Reservation[]
+  reviews            Review[]
+  productReviews     ProductReview[]
+  chatSessions       ChatSession[]
+  changeRequests     ReservationChangeRequest[]
+  tickets            Ticket[]
+  adminNotifications AdminNotification[]
+  wallets            Wallet[]
+  orders             Order[]
+  addresses          UserAddress[]
+  cart               Cart?
+}
+
+enum Role {
+  CUSTOMER
+  ADMIN
+  OWNER
+}
+
+enum AuthProvider {
+  EMAIL
+  GOOGLE
+  PHONE
+}
+
+enum AdminNotificationType {
+  CUSTOMER_CREATED
+  RESERVATION_CREATED
+  RESERVATION_CANCELLED
+  RESERVATION_RESCHEDULED
+  RESERVATION_CHANGE_REQUESTED
+  PROFILE_UPDATED
+  CHAT_SESSION_CREATED
+  CHAT_MESSAGE_RECEIVED
+  CHAT_ESCALATED
+  TICKET_CREATED
+  TICKET_REPLY_RECEIVED
+  ORDER_CREATED
+  ORDER_CANCELLED
+  WALLET_RECHARGE
+  PRODUCT_REVIEW_CREATED
+}
+
+enum AdminNotificationEntityType {
+  PROFILE
+  RESERVATION
+  CHAT_SESSION
+  CHAT_MESSAGE
+  TICKET
+  TICKET_MESSAGE
+  ORDER
+  WALLET_TRANSACTION
+  PRODUCT_REVIEW
+}
+
+// ── Menu ────────────────────────────────────────────────────────
+model MenuCategory {
+  id        String     @id @default(cuid())
+  name      String     // e.g. "Starters", "Mains", "Desserts"
+  nameEs    String?    // Spanish name
+  slug      String     @unique
+  slugEs    String?    @unique // Spanish URL slug
+  icon      String     @default("default") // CategoryIconKey from lib/category-icons
+  order     Int        @default(0)
+  isDraft   Boolean    @default(false) // true = not visible / not applied to customers
+  draftData Json?      // stores pending edits for published categories
+  items     MenuItem[]
+
+  @@index([isDraft])
+}
+
+model MenuItem {
+  id          String       @id @default(cuid())
+  sku         String?      @unique @db.VarChar(30) // custom product code, e.g. "WG-001"
+  slug        String       @unique   // URL-friendly name, e.g. "garden-harvest-bowl"
+  category   MenuCategory?  @relation(fields: [categoryId], references: [id])
+  categoryId String?
+  name          String
+  description   String
+  prices        Json         @default("{\"PEN\":0,\"USD\":0}") // fixed prices per currency
+  nameEs        String?      // Spanish name
+  descriptionEs String?      // Spanish description
+  tagsEs        String[]     @default([]) // Spanish tags
+  slugEs        String?      @unique // Spanish URL slug, e.g. "granola-de-las-alturas"
+  ingredients   String[]     @default([]) // English ingredient list
+  ingredientsEs String[]     @default([]) // Spanish ingredient list
+  imageUrl      String?
+  images        String[]     @default([]) // additional gallery images
+  tags          String[]     // ["vegan", "gluten-free", ...]
+  tagColors     Json?        // {"vegan": "#10b981", "vegano": "#10b981"}
+  available     Boolean      @default(true)
+  featured      Boolean      @default(false) // show on homepage
+  featuredOrder Int          @default(0)     // homepage display order
+  order         Int          @default(0)
+  isDraft       Boolean      @default(false) // true = not visible to customers
+  // Self-relation: a draft can point at its parent published item.
+  // Drafts (isDraft=true, parentId!=null) are "alternate versions" of the parent.
+  parentId      String?
+  parent        MenuItem?    @relation("MenuItemDrafts", fields: [parentId], references: [id], onDelete: Cascade)
+  drafts        MenuItem[]   @relation("MenuItemDrafts")
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+  orderItems    OrderItem[]
+  cartItems     CartItem[]
+  productReviews ProductReview[]
+
+  @@index([categoryId])
+  @@index([featured])
+  @@index([slug])
+  @@index([isDraft])
+  @@index([parentId])
+}
+
+// ── Reservations ────────────────────────────────────────────────
+model Reservation {
+  id             String                    @id @default(cuid())
+  profile        Profile?                  @relation(fields: [profileId], references: [id])
+  profileId      String?
+  date           DateTime
+  partySize      Int
+  notes          String?
+  nickname       String?                                   // user-defined label for the reservation
+  status         ReservationStatus         @default(PENDING)
+  locale         String                    @default("en")   // detected at booking time; used for email locale
+  remindedAt     DateTime?
+  hiddenByUser   Boolean                   @default(false) // user "deleted" from their view; admin still sees it
+  hiddenByAdmin  Boolean                   @default(false) // hidden from the CMS queue; customer still sees it
+  adminViewedAt  DateTime?                 // set when an admin opens the detail page; cleared on customer edits
+  createdAt      DateTime                  @default(now())
+  updatedAt      DateTime                  @updatedAt
+  review         Review?
+  changeRequests ReservationChangeRequest[]
+
+  @@index([date])
+  @@index([profileId])
+}
+
+enum ReservationStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+  COMPLETED
+}
+
+// ── Reviews ────────────────────────────────────────────────────────
+model Review {
+  id                String      @id @default(cuid())
+  profile           Profile     @relation(fields: [profileId], references: [id])
+  profileId         String
+  reservation       Reservation @relation(fields: [reservationId], references: [id])
+  reservationId     String      @unique   // one review per completed reservation
+  rating            Int                   // 1–5
+  comment           String
+  photos            String[]    @default([]) // public URLs of uploaded photos
+  authorDisplayName String?               // anonymized snapshot at submit time
+  authorAvatarUrl   String?               // profile avatar snapshot at submit time
+  pinned            Boolean     @default(false) // featured on homepage (max 3)
+  pinnedAt          DateTime?
+  approved          Boolean     @default(false)
+  hidden            Boolean     @default(false)
+  createdAt         DateTime    @default(now())
+
+  @@index([approved, hidden, pinned, createdAt])
+}
+
+// ── Product Reviews ────────────────────────────────────────────────
+// One review per (profile, menuItem). Linked to an OrderItem of a
+// COMPLETED order as proof of purchase. Editable by owner; admin
+// moderates via approved/hidden flags identical to Review.
+model ProductReview {
+  id                String     @id @default(cuid())
+  profile           Profile    @relation(fields: [profileId], references: [id])
+  profileId         String
+  menuItem          MenuItem   @relation(fields: [menuItemId], references: [id])
+  menuItemId        String
+  orderItem         OrderItem? @relation(fields: [orderItemId], references: [id], onDelete: SetNull)
+  orderItemId       String?    // proof-of-purchase reference; nullable if order item is deleted
+  orderId           String?    // denormalized for audit/admin convenience
+  rating            Int        // 1–5
+  comment           String     @db.VarChar(1000)
+  photos            String[]   @default([])
+  authorDisplayName String?
+  authorAvatarUrl   String?
+  pinned            Boolean    @default(false) // featured first on product page (max 3 per item)
+  pinnedAt          DateTime?
+  approved          Boolean    @default(false)
+  hidden            Boolean    @default(false)
+  createdAt         DateTime   @default(now())
+  updatedAt         DateTime   @updatedAt
+
+  @@unique([profileId, menuItemId])
+  @@index([menuItemId, approved, hidden, pinned, createdAt])
+  @@index([approved, hidden, createdAt])
+}
+
+// ── Reservation Change Requests ──────────────────────────────────
+// Stores customer requests to reschedule or cancel confirmed
+// reservations. Admin reviews and accepts or rejects each one.
+model ReservationChangeRequest {
+  id            String              @id @default(cuid())
+  reservation   Reservation         @relation(fields: [reservationId], references: [id], onDelete: Cascade)
+  reservationId String
+  profile       Profile?            @relation(fields: [profileId], references: [id])
+  profileId     String?
+  type          ChangeRequestType
+  preferredDate DateTime?
+  message       String?
+  status        ChangeRequestStatus @default(PENDING)
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @updatedAt
+
+  @@index([reservationId])
+  @@index([status])
+}
+
+enum ChangeRequestType {
+  RESCHEDULE
+  CANCEL
+}
+
+enum ChangeRequestStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+}
+
+// ── AI Chatbot ──────────────────────────────────────────────────
+model ChatSession {
+  id             String            @id @default(cuid())
+  profile        Profile?          @relation(fields: [profileId], references: [id])
+  profileId      String?
+  sessionKey     String            @unique
+  status         ChatSessionStatus @default(ACTIVE)
+  tier           ChatTier          @default(AI)
+  locale         String            @default("en")
+  adminId        String?           // assigned admin for Tier 3
+  hiddenByUser   Boolean           @default(false) // user "deleted" from their view; admin still sees it
+  summary        String?           // AI-generated short title for the conversation list
+  blockedAt      DateTime?         // set when session is hard-blocked (anti-spam Tier 3)
+  blockedReason  String?           // machine-readable reason (e.g. "tier3_tier1_repeated")
+  messages       ChatMessage[]
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+
+  @@index([status])
+  @@index([profileId])
+  @@index([blockedAt])
+}
+
+model ChatMessage {
+  id        String      @id @default(cuid())
+  session   ChatSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  sessionId String
+  role      MessageRole
+  content   String
+  tier      ChatTier    @default(AI)
+  metadata  Json?
+  createdAt DateTime    @default(now())
+
+  @@index([sessionId, createdAt])
+}
+
+enum ChatSessionStatus {
+  ACTIVE
+  WAITING
+  AGENT_JOINED
+  RESOLVED
+  CANCELLED
+}
+
+enum ChatTier {
+  FAQ
+  AI
+  HUMAN
+}
+
+enum MessageRole {
+  USER
+  ASSISTANT
+  AGENT
+  SYSTEM
+}
+
+// ── Support Tickets ───────────────────────────────────────────────
+// Professional ticket system for customer support inquiries.
+// Completely separate from the AI chatbot (Sage).
+
+model TicketCounter {
+  id      String @id @default("global")
+  current Int    @default(0)
+}
+
+model Ticket {
+  id                    String         @id @default(cuid())
+  ticketNumber          Int            @unique
+  profile               Profile        @relation(fields: [profileId], references: [id])
+  profileId             String
+  category              TicketCategory
+  subject               String         @db.VarChar(120)
+  status                TicketStatus   @default(OPEN)
+  priority              TicketPriority @default(MEDIUM)
+  priorityLockedByAdmin Boolean        @default(false)
+  assignedAdminId       String?
+  locale                String         @default("en")
+  hiddenByUser          Boolean        @default(false) // user "deleted" from their view; admin still sees it
+  createdAt             DateTime       @default(now())
+  updatedAt             DateTime       @updatedAt
+  messages              TicketMessage[]
+
+  @@index([profileId])
+  @@index([status])
+  @@index([priority])
+  @@index([assignedAdminId])
+}
+
+model TicketMessage {
+  id          String                  @id @default(cuid())
+  ticket      Ticket                  @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  ticketId    String
+  senderId    String
+  senderRole  TicketMessageSenderRole
+  content     String
+  isInternal  Boolean                 @default(false)
+  createdAt   DateTime                @default(now())
+  attachments TicketAttachment[]
+
+  @@index([ticketId, createdAt])
+}
+
+model TicketAttachment {
+  id        String        @id @default(cuid())
+  message   TicketMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  messageId String
+  fileName  String
+  fileUrl   String
+  fileSize  Int
+  mimeType  String
+  createdAt DateTime      @default(now())
+}
+
+enum TicketCategory {
+  GENERAL_INQUIRY
+  RESERVATIONS
+  COMPLAINTS_SUGGESTIONS
+  BILLING
+  OTHER
+}
+
+enum TicketStatus {
+  OPEN
+  IN_PROGRESS
+  AWAITING_REPLY
+  RESOLVED
+  CLOSED
+}
+
+enum TicketPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum TicketMessageSenderRole {
+  USER
+  AGENT
+  SYSTEM
+}
+
+// ── Discounts & Promotions ──────────────────────────────────────
+model Discount {
+  id           String              @id @default(cuid())
+  name         String              // internal name (admin only)
+  description  String?             // public-facing customer text
+  type         DiscountType        // COUPON | AUTOMATIC | HAPPY_HOUR
+  valueType    DiscountValueType   // PERCENTAGE | FIXED_AMOUNT
+  value        Decimal             @db.Decimal(10, 2) // 20 = 20% / 5.00 = S/5.00 off (PEN)
+  valueUsd     Decimal?            @db.Decimal(10, 2) // FIXED_AMOUNT USD off; null when PERCENTAGE
+  code         String?             @unique // coupons only
+
+  // Optional conditions
+  minPartySize Int?                // minimum party size to apply
+  categoryId   String?             // restrict to one category (legacy / single-select)
+  categoryIds  String[]            @default([]) // restrict to one or more categories
+  menuItemId   String?             // restrict to specific menu item
+
+  // Date range
+  validFrom    DateTime?
+  validUntil   DateTime?
+
+  // Happy hour / day-of-week schedule
+  daysOfWeek   Int[]               // [1,2,3,4,5] = Mon–Fri
+  timeFrom     String?             // "18:00"
+  timeTo       String?             // "20:00"
+
+  // Usage limits
+  usageLimit   Int?                // null = unlimited
+  usageCount   Int                 @default(0)
+  perUserLimit Int?                // max uses per customer
+
+  active          Boolean  @default(true)
+  applyToNone     Boolean  @default(false) // true = parked, not applied to any product
+  excludedItemIds String[] @default([])   // item IDs excluded from global/category discounts ("All items, Except...")
+  isDraft         Boolean  @default(false) // true = not visible / active for customers
+  draftData       Json?    // stores pending edits for published discounts
+  createdAt       DateTime @default(now())
+  updatedAt    DateTime            @updatedAt
+  applications DiscountApplication[]
+  orderApplications OrderDiscount[]
+
+  @@index([active])
+  @@index([isDraft])
+}
+
+enum DiscountType {
+  COUPON      // customer enters a code
+  AUTOMATIC   // auto-applied, no code needed
+  HAPPY_HOUR  // automatic within time range
+}
+
+enum DiscountValueType {
+  PERCENTAGE
+  FIXED_AMOUNT
+}
+
+model DiscountApplication {
+  id            String   @id @default(cuid())
+  discount      Discount @relation(fields: [discountId], references: [id])
+  discountId    String
+  profileId     String?  // who used it
+  reservationId String?  // which reservation it was applied to
+  appliedAt     DateTime @default(now())
+}
+
+// ── Verification Codes ────────────────────────────────────────
+// The app's own OTP codes for recovery email verification (not
+// handled by InsForge, which only manages auth-bound emails).
+model VerificationCode {
+  id        String   @id @default(cuid())
+  profileId String
+  email     String   // the email being verified
+  code      String   // 6-digit code
+  attempts  Int      @default(0) // failed verification attempts; code is invalidated after MAX_OTP_ATTEMPTS
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([profileId, email])
+}
+
+// ── App Settings ────────────────────────────────────────────────
+// Singleton row (key = "global") holding feature flags that OWNER
+// can toggle from the CMS.
+model AppSettings {
+  key                      String   @id @default("global")
+  advanceReservationEnabled Boolean  @default(true)
+  advanceReservationValue  Int      @default(2)
+  advanceReservationUnit   String   @default("hours")
+  productImageLimit        Int      @default(4) // max gallery images per menu item
+  defaultCurrency          String   @default("PEN") // "PEN" = Peruvian Sol, "USD" = US Dollar
+  reviewPhotoLimit         Int      @default(3)  // max photos per customer review (0 = disabled)
+  /// No longer read or written: chatMode replaced it. Kept because dropping a column is a destructive migration.
+  liveChatEnabled          Boolean  @default(true)
+  /// "off" | "staff" | "sage" | "mixed" — see packages/core/chat/chat-settings.ts
+  chatMode                 String   @default("staff")
+  /// When true, Sage may quote CMS ingredient lists from get_menu; when false, omit from tool output and instruct redirect
+  sageShareIngredients     Boolean  @default(true)
+  /// Most dish cards one chat message may hold (1–12). The usual amount is sageMenuDefaultCount.
+  sageMenuPageSize         Int      @default(8)
+  /// Dish cards Sage shows when the guest does not name a number. Never above sageMenuPageSize.
+  sageMenuDefaultCount     Int      @default(4)
+  /// The decision model that reads each message before Sage answers, pinned to a version
+  sageDecisionModel        String   @default("typesafe/jev-1.13")
+  /// Shows the decision model's answers under each Sage reply in the panel chat
+  sageShowTechnicalDetails Boolean  @default(false)
+  // Sage's model provider. Any OpenAI-compatible API; the key never lives here, only in the server env.
+  aiProvider               String   @default("openai")      // "openai" | "openrouter" | "custom"
+  aiBaseUrl                String   @default("")            // read only when aiProvider = "custom"
+  aiModel                  String   @default("gpt-4o-mini") // must support tool calling — Sage has six tools
+  aiSummaryModel           String   @default("")            // conversation titles; empty = same as aiModel
+  aiTemperature            Decimal  @default(0.7) @db.Decimal(3, 2)
+  aiMaxTokens              Int      @default(1600)
+  galleryAutoPlayInterval   Int      @default(5)    // seconds between auto-play slides (0 = disabled)
+  reviewsEnabled            Boolean  @default(true) // allow customers to submit reviews after completed reservations
+  // Reservation configuration
+  maxPartySize              Int      @default(40)   // max guests per reservation (1–50)
+  largeGroupWarningFrom     Int      @default(8)    // show "large group" hint from this party size
+  /// Concurrent reservations a single time slot accepts (1–100). Capacity is measured over
+  /// reservationDuration, or timeSlotIncrement when the duration is disabled.
+  maxReservationsPerSlot    Int      @default(8)
+  timeSlotIncrement         Int      @default(30)   // minutes: 15 | 30 | 60
+  reservationDurationEnabled Boolean @default(false)
+  reservationDurationValue  Int      @default(1)
+  reservationDurationUnit   String   @default("hours")
+  maxDaysAhead              Int      @default(30)   // how far in advance customers can book (1–365)
+  operatingDays             String   @default("1,2,3,4,5,6,7") // comma-separated 1=Mon … 7=Sun
+  openingTime               String   @default("09:00") // HH:MM
+  closingTime               String   @default("22:00") // HH:MM
+  // Ranges with no reservations (e.g. staff break), same-day HH:MM — JSON array of { start, end }
+  closedTimeRanges          Json     @default("[]")
+  // Business contact info
+  contactPhone              String   @default("")
+  contactAddress            String   @default("")
+  /// Social networks as { platformId: handle } — see packages/core/social-links.ts
+  socialLinks               Json     @default("{}")
+  /// Shown on public pages / Sage as contact email; empty = use env fallbacks (does not change SMTP .env)
+  publicContactEmail        String   @default("")
+  /// Second line under phone on Contact page (English locale)
+  contactPhoneHoursNoteEn   String   @default("")
+  /// Second line under phone on Contact page (Spanish locale)
+  contactPhoneHoursNoteEs   String   @default("")
+  // Appearance
+  chatBubblePosition        String   @default("right") // "left" | "right"
+  dateFormat                String   @default("DD/MM/YYYY")
+  timeFormat                String   @default("24h") // "12h" | "24h"
+  // Notifications
+  /// When false, no operational admin alert emails are sent (in-app AdminNotification still works).
+  adminEmailNotificationsEnabled Boolean @default(true)
+  notificationEmail         String   @default("")
+  // SMTP config is NOT here. It lives in SMTP_HOST/PORT/USER/PASS/FROM, see
+  // packages/core/email.ts. A smtpPass column would be a credential in plaintext
+  // that GET /api/settings hands to every ADMIN.
+  // Payments & Orders
+  walletEnabled             Boolean  @default(true)
+  walletAllowDualCurrency   Boolean  @default(true)
+  /// Test balance credited once to each new account, in the same transaction that creates its Profile. 0 leaves that currency empty.
+  initialBalancePEN         Decimal  @default(200) @db.Decimal(12, 2)
+  /// Same as initialBalancePEN, for the USD wallet.
+  initialBalanceUSD         Decimal  @default(80) @db.Decimal(12, 2)
+  pickupEnabled             Boolean  @default(true)
+  deliveryEnabled           Boolean  @default(true)
+  pickupLeadTimeMinutes     Int      @default(15)
+  defaultDeliveryFeePEN     Decimal  @default(0) @db.Decimal(12, 2)
+  defaultDeliveryFeeUSD     Decimal  @default(0) @db.Decimal(12, 2)
+  minOrderGlobalPEN         Decimal  @default(0) @db.Decimal(12, 2)
+  minOrderGlobalUSD         Decimal  @default(0) @db.Decimal(12, 2)
+  restaurantLat             Decimal? @db.Decimal(10, 7)
+  restaurantLng             Decimal? @db.Decimal(10, 7)
+  orderNumberPrefix         String   @default("WG")
+  // Fiscal data (Boleta / Factura — Peru)
+  companyRuc                String   @default("")
+  companyLegalName          String   @default("")
+  companyFiscalAddress      String   @default("")
+  igvRate                   Decimal  @default(18) @db.Decimal(5, 2)
+  boletaSeries              String   @default("B001")
+  facturaSeries             String   @default("F001")
+  boletaEnabled             Boolean  @default(true)
+  facturaEnabled            Boolean  @default(true)
+  // Dashboard preferences
+  dashboardKitchenAlertMinutes  Int    @default(20)      // PREPARING > X min → red alert
+  dashboardPickupAlertMinutes   Int    @default(10)      // READY > X min without pickup
+  dashboardLowStockThreshold    Int    @default(5)       // items sold < N → low performer
+  dashboardEtaToleranceMinutes  Int    @default(15)      // delivery on-time if within ETA ± X
+  dashboardDefaultPreset        String @default("today") // "today"|"yesterday"|"last7d"|"last30d"|"thisMonth"|"lastMonth"
+  updatedAt                     DateTime @updatedAt
+}
+
+// ── Admin Notifications ───────────────────────────────────────────
+model AdminNotification {
+  id         String                      @id @default(cuid())
+  admin      Profile                     @relation(fields: [adminId], references: [id], onDelete: Cascade)
+  adminId    String
+  type       AdminNotificationType
+  entityType AdminNotificationEntityType
+  entityId   String
+  title      String                      @db.VarChar(140)
+  message    String                      @db.VarChar(280)
+  href       String?                     @db.VarChar(255)
+  metadata   Json?
+  isRead     Boolean                     @default(false)
+  readAt     DateTime?
+  createdAt  DateTime                    @default(now())
+
+  @@index([adminId, isRead, createdAt])
+  @@index([adminId, createdAt])
+  @@index([entityType, entityId])
+}
+
+// ══════════════════════════════════════════════════════════════════
+// Payments System
+// ══════════════════════════════════════════════════════════════════
+
+// ── Wallets ───────────────────────────────────────────────────────
+model Wallet {
+  id           String               @id @default(cuid())
+  profile      Profile              @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  profileId    String
+  currency     String               // "PEN" | "USD"
+  balance      Decimal              @default(0) @db.Decimal(12, 2)
+  isActive     Boolean              @default(true)
+  createdAt    DateTime             @default(now())
+  updatedAt    DateTime             @updatedAt
+  transactions WalletTransaction[]
+
+  @@unique([profileId, currency])
+  @@index([profileId])
+}
+
+model WalletTransaction {
+  id             String                @id @default(cuid())
+  wallet         Wallet                @relation(fields: [walletId], references: [id])
+  walletId       String
+  type           WalletTransactionType
+  amount         Decimal               @db.Decimal(12, 2) // always positive
+  direction      WalletDirection       // CREDIT | DEBIT
+  balanceAfter   Decimal               @db.Decimal(12, 2) // snapshot post-transaction
+  reference      String?               // orderId / refundId / null
+  performedById  String?               // OWNER who executed (recharge/adjust)
+  note           String?               @db.VarChar(280)
+  idempotencyKey String?               @unique // anti-double-charge
+  createdAt      DateTime              @default(now())
+
+  @@index([walletId, createdAt])
+  @@index([reference])
+}
+
+enum WalletTransactionType {
+  RECHARGE      // OWNER adds balance
+  ADJUST_ADD    // OWNER adjusts +
+  ADJUST_DEDUCT // OWNER adjusts -
+  ADJUST_SET    // OWNER sets balance to an exact value
+  PURCHASE      // Order payment
+  REFUND        // Refund on cancellation
+  INITIAL_BALANCE // Test balance credited once, when the account is created
+}
+
+enum WalletDirection {
+  CREDIT
+  DEBIT
+}
+
+// ── Cart ─────────────────────────────────────────────────────────
+model Cart {
+  id        String     @id @default(cuid())
+  profile   Profile?   @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  profileId String?    @unique
+  guestKey  String?    @unique // for guests before registering (server cookie optional)
+  currency  String     // PEN | USD — fixed at first item add
+  items     CartItem[]
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+}
+
+model CartItem {
+  id         String   @id @default(cuid())
+  cart       Cart     @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  cartId     String
+  menuItem   MenuItem @relation(fields: [menuItemId], references: [id])
+  menuItemId String
+  quantity   Int      @default(1)
+  unitPrice  Decimal  @db.Decimal(12, 2) // price snapshot at add time
+  notes      String?  @db.VarChar(140)
+  createdAt  DateTime @default(now())
+
+  @@unique([cartId, menuItemId])
+  @@index([cartId])
+}
+
+// ── Orders ────────────────────────────────────────────────────────
+model Order {
+  id                   String            @id @default(cuid())
+  orderNumber          Int               @unique
+  profile              Profile           @relation(fields: [profileId], references: [id])
+  profileId            String
+  status               OrderStatus       @default(PENDING)
+  fulfillment          FulfillmentMethod
+  currency             String            // PEN | USD
+  subtotal             Decimal           @db.Decimal(12, 2)
+  discountTotal        Decimal           @default(0) @db.Decimal(12, 2)
+  deliveryFee          Decimal           @default(0) @db.Decimal(12, 2)
+  total                Decimal           @db.Decimal(12, 2)
+  paymentMethod        PaymentMethod     @default(WALLET)
+  paymentProviderRef   String?           // set by an external payment gateway
+  paidAt               DateTime?
+  scheduledFor         DateTime?         // pickup/delivery time
+  estimatedReadyAt     DateTime?
+  // Delivery snapshot
+  deliveryAddress      String?           @db.VarChar(255)
+  deliveryAddressDetail String?          @db.VarChar(140)
+  deliveryLat          Decimal?          @db.Decimal(10, 7)
+  deliveryLng          Decimal?          @db.Decimal(10, 7)
+  deliveryZoneId       String?
+  deliveryZoneName     String?           // snapshot
+  customerPhone        String?           // E.164
+  customerName         String?
+  notes                String?           @db.VarChar(280)
+  cancelReason         String?           @db.VarChar(280)
+  hiddenByUser         Boolean           @default(false) // user "deleted" from their view; admin still sees it
+  hiddenByAdmin        Boolean           @default(false) // hidden from the CMS queue; customer still sees it
+  locale               String            @default("en")
+  // Billing document (Boleta / Factura — Peru)
+  documentType         BillingDocumentType @default(BOLETA)
+  documentSeries       String?           // snapshot: "B001" | "F001"
+  documentNumber       String?           // snapshot: "00000001"
+  // Boleta fields
+  buyerDni             String?           @db.VarChar(8)  // optional
+  // Factura fields
+  fiscalRuc            String?           @db.VarChar(11)
+  fiscalLegalName      String?           @db.VarChar(200)
+  fiscalAddress        String?           @db.VarChar(255)
+  items                OrderItem[]
+  appliedDiscounts     OrderDiscount[]
+  events               OrderEvent[]
+  createdAt            DateTime          @default(now())
+  updatedAt            DateTime          @updatedAt
+
+  @@index([profileId])
+  @@index([status])
+  @@index([scheduledFor])
+}
+
+model OrderItem {
+  id           String   @id @default(cuid())
+  order        Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  orderId      String
+  menuItem     MenuItem @relation(fields: [menuItemId], references: [id])
+  menuItemId   String
+  nameSnapshot String   // preserved name in case it gets renamed later
+  quantity     Int
+  /// Catalog unit price before automatic menu discount (checkout snapshot).
+  listUnitPrice Decimal? @db.Decimal(12, 2)
+  /// Unit price actually charged (after automatic menu discount).
+  unitPrice    Decimal  @db.Decimal(12, 2)
+  lineTotal    Decimal  @db.Decimal(12, 2)
+  notes        String?  @db.VarChar(140)
+  productReviews ProductReview[]
+}
+
+model OrderDiscount {
+  id         String   @id @default(cuid())
+  order      Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  orderId    String
+  discount   Discount @relation(fields: [discountId], references: [id])
+  discountId String
+  amount     Decimal  @db.Decimal(12, 2)
+  codeUsed   String?
+}
+
+model OrderEvent {
+  id        String         @id @default(cuid())
+  order     Order          @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  orderId   String
+  type      OrderEventType
+  message   String?        @db.VarChar(280)
+  actorId   String?        // staff/admin id
+  createdAt DateTime       @default(now())
+}
+
+model OrderCounter {
+  id      String @id @default("global")
+  current Int    @default(0)
+}
+
+model DocumentCounter {
+  id      String @id // "B001" | "F001" (the series)
+  current Int    @default(0)
+}
+
+enum BillingDocumentType {
+  BOLETA
+  FACTURA
+}
+
+enum OrderStatus {
+  PENDING
+  PREPARING
+  READY
+  OUT_FOR_DELIVERY
+  COMPLETED
+  CANCELLED
+  REFUNDED
+}
+
+enum FulfillmentMethod {
+  PICKUP
+  DELIVERY
+}
+
+enum PaymentMethod {
+  WALLET
+  MANUAL
+}
+
+enum OrderEventType {
+  CREATED
+  PAID
+  STATUS_CHANGED
+  CANCELLED
+  REFUNDED
+  NOTE_ADDED
+}
+
+// ── User Addresses ────────────────────────────────────────────────
+model UserAddress {
+  id            String   @id @default(cuid())
+  profile       Profile  @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  profileId     String
+  label         String?  @db.VarChar(40) // "Home", "Office"
+  recipientName String?
+  phone         String?
+  fullAddress   String   @db.VarChar(255)
+  detail        String?  @db.VarChar(140) // apt/reference
+  lat           Decimal? @db.Decimal(10, 7)
+  lng           Decimal? @db.Decimal(10, 7)
+  country       String?
+  region        String?  // department
+  province      String?
+  district      String?
+  isDefault     Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([profileId])
+}
+
+// ── Delivery Zones ────────────────────────────────────────────────
+model DeliveryZone {
+  id               String           @id @default(cuid())
+  name             String
+  type             DeliveryZoneType
+  fee              Decimal          @db.Decimal(12, 2)
+  feeUsd           Decimal          @db.Decimal(12, 2)
+  minOrder         Decimal          @default(0) @db.Decimal(12, 2)
+  minOrderUsd      Decimal          @default(0) @db.Decimal(12, 2)
+  estimatedMinutes Int              @default(45)
+  active           Boolean          @default(true)
+  priority         Int              @default(0)
+  // AREA (administrative)
+  country          String?
+  region           String?
+  province         String?
+  district         String?
+  // POLYGON / RADIUS (geographic)
+  centerLat        Decimal?         @db.Decimal(10, 7)
+  centerLng        Decimal?         @db.Decimal(10, 7)
+  radiusMeters     Int?
+  polygon          Json?            // GeoJSON coordinates
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+
+  @@index([active])
+  @@index([type])
+}
+
+enum DeliveryZoneType {
+  AREA
+  POLYGON
+  RADIUS
+}

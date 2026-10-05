@@ -1,0 +1,301 @@
+# ══════════════════════════════════════════════════════════════════
+# Build the two application images.
+#
+# A push to `production` builds whichever app the changed files affect, and
+# publishes its image to this repository's package registry. Building is not
+# deploying: the deploy is a separate, approved step. See "Se compila fuera
+# del servidor" in wildgrove-vault/reference/07-decisions.md.
+#
+# The build needs a database, because the dish pages enumerate dishes to
+# generate their routes. It gets a throwaway PostgreSQL that lives and dies with
+# the job, never the production one. That is the whole reason this workflow
+# exists: with nobody outside the server reading the real database, the database
+# can stop accepting connections from the public internet.
+#
+# The migrator image applies the repository's migrations to an empty database
+# before either application builds, so a broken migration fails here.
+# ══════════════════════════════════════════════════════════════════
+
+name: build
+
+on:
+  push:
+    branches: [production]
+  workflow_dispatch:
+    inputs:
+      app:
+        description: Which app to build
+        type: choice
+        options: [both, web, cms]
+        default: both
+
+# One build at a time per branch. A second push waits instead of racing the
+# first to publish the same tag.
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  packages: write
+
+env:
+  NODE_VERSION: "24"
+  # The repository pins npm in `packageManager`. The settings in .npmrc that
+  # carry the supply-chain policy only exist in npm 11, and an older npm ignores
+  # them without a word, so the version is pinned and checked rather than
+  # inherited from whatever the runner ships.
+  NPM_VERSION: "11.19.0"
+
+jobs:
+  # ── Which apps does this push affect? ──────────────────────────
+  scope:
+    runs-on: ubuntu-latest
+    outputs:
+      web: ${{ steps.decide.outputs.web }}
+      cms: ${{ steps.decide.outputs.cms }}
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          # Full history: a push carrying several commits has to be diffed
+          # against the commit before all of them, and a shallow checkout does
+          # not have it. Missing it would rebuild both apps every time, which
+          # is safe but wastes the path filtering this job exists for.
+          fetch-depth: 0
+
+      - id: version
+        name: Read the current version
+        run: |
+          set -euo pipefail
+          file=wildgrove-vault/versions/preview/00-preview-index.md
+          version=$(sed -n 's/^Versión actual: \*\*\(.*\)\*\*.*$/\1/p' "$file" | head -1)
+          if ! printf '%s' "$version" | grep -qE '^[pv][0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$'; then
+            echo "::error::No version found in $file (read: '${version}')." >&2
+            exit 1
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "Version: $version"
+
+      - id: decide
+        name: Decide which apps to build
+        env:
+          MANUAL: ${{ github.event_name == 'workflow_dispatch' && inputs.app || '' }}
+        run: |
+          set -euo pipefail
+
+          if [ -n "$MANUAL" ]; then
+            case "$MANUAL" in
+              both) web=true;  cms=true  ;;
+              web)  web=true;  cms=false ;;
+              cms)  web=false; cms=true  ;;
+              *)    echo "::error::Unknown app '$MANUAL'"; exit 1 ;;
+            esac
+            echo "web=$web" >> "$GITHUB_OUTPUT"
+            echo "cms=$cms" >> "$GITHUB_OUTPUT"
+            echo "Building — web: $web, cms: $cms"
+            exit 0
+          fi
+
+          before='${{ github.event.before }}'
+          if [ -z "$before" ] || [ "$before" = "0000000000000000000000000000000000000000" ] \
+             || ! git cat-file -e "$before^{commit}" 2>/dev/null; then
+            # First push, or a history this checkout cannot see: build everything
+            # rather than guess and publish a stale image.
+            echo "web=true" >> "$GITHUB_OUTPUT"
+            echo "cms=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          changed=$(git diff --name-only "$before" "${{ github.sha }}")
+          echo "Changed files:"; echo "$changed" | sed 's/^/  /'
+
+          # Anything shared rebuilds both: the packages are compiled into each
+          # app, and the root manifests decide what gets installed.
+          shared='^(packages/|package\.json|package-lock\.json|\.npmrc|turbo\.json|compose\.yaml|\.github/workflows/)'
+
+          # `grep -q` exits non-zero when nothing matches, which is the normal
+          # case here, so each test gets its own `if` rather than riding on a
+          # `&&` list where `set -e` semantics are easy to get wrong.
+          web=false; cms=false
+          if echo "$changed" | grep -qE "$shared"; then web=true; cms=true; fi
+          if echo "$changed" | grep -qE '^wildgrove-web/'; then web=true; fi
+          if echo "$changed" | grep -qE '^wildgrove-cms/'; then cms=true; fi
+
+          echo "web=$web" >> "$GITHUB_OUTPUT"
+          echo "cms=$cms" >> "$GITHUB_OUTPUT"
+          echo "Building — web: $web, cms: $cms"
+
+  # ── Audit the lockfile without installing dependencies ────────
+  audit:
+    needs: scope
+    if: needs.scope.outputs.web == 'true' || needs.scope.outputs.cms == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          package-manager-cache: false
+      - name: Pin npm to the version this repository requires
+        run: |
+          set -euo pipefail
+          npm install -g "npm@${NPM_VERSION}"
+          test "$(npm -v)" = "${NPM_VERSION}" || { echo "::error::npm is $(npm -v), expected ${NPM_VERSION}"; exit 1; }
+      - name: Report dependency advisories
+        continue-on-error: true
+        run: npm audit --package-lock-only --audit-level=high
+
+  # ── Build and publish ──────────────────────────────────────────
+  image:
+    needs: scope
+    if: needs.scope.outputs.web == 'true' || needs.scope.outputs.cms == 'true'
+    runs-on: ubuntu-latest
+    strategy:
+      # One app failing must not cancel the other: a published image is useful
+      # on its own, and the deploy picks images one at a time anyway.
+      fail-fast: false
+      matrix:
+        app: [web, cms]
+
+    services:
+      # Throwaway. It holds the schema and no dishes, and it is destroyed with
+      # the job. Its credentials are meaningless and deliberately in the open.
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: wildgrove
+          POSTGRES_PASSWORD: throwaway
+          POSTGRES_DB: wildgrove
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U wildgrove -d wildgrove"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    steps:
+      - name: Skip apps this push does not affect
+        id: want
+        run: |
+          if [ "${{ matrix.app }}" = "web" ]; then want='${{ needs.scope.outputs.web }}'; else want='${{ needs.scope.outputs.cms }}'; fi
+          echo "build=$want" >> "$GITHUB_OUTPUT"
+          if [ "$want" = "true" ]; then
+            echo "Building wildgrove-${{ matrix.app }}"
+          else
+            echo "Nothing to do for wildgrove-${{ matrix.app }}"
+          fi
+
+      - uses: actions/checkout@v7
+        if: steps.want.outputs.build == 'true'
+
+      - name: Sign in to the package registry
+        if: steps.want.outputs.build == 'true'
+        run: echo '${{ secrets.GITHUB_TOKEN }}' | docker login ghcr.io -u '${{ github.actor }}' --password-stdin
+
+      - name: Build the migrator and migrate the throwaway database
+        if: steps.want.outputs.build == 'true'
+        run: |
+          set -euo pipefail
+          # The image build that follows runs on the same builder, so it reuses
+          # the `deps` stage installed here instead of installing a second time.
+          # Nothing is cached between runs: restoring node_modules from a
+          # registry took as long as installing it. See
+          # wildgrove-vault/reference/07-decisions.md.
+          docker build --network=host \
+            --target migrate -f wildgrove-web/Dockerfile \
+            -t wildgrove-migrate:ci \
+            --build-arg "NPM_VERSION=${NPM_VERSION}" .
+          db=postgresql://wildgrove:throwaway@127.0.0.1:5432/wildgrove
+          docker run --rm --network host -e "DATABASE_URL=${db}" -e "DIRECT_URL=${db}" \
+            wildgrove-migrate:ci migrate deploy
+
+      - name: Build and publish the image
+        if: steps.want.outputs.build == 'true'
+        env:
+          VERSION: ${{ needs.scope.outputs.version }}
+          # Not secrets. Next inlines every NEXT_PUBLIC_* value into the
+          # JavaScript it sends to the browser, so they are readable by anyone
+          # who opens the site. They are here because the build has to embed
+          # them, not because they need hiding. Nothing that must stay hidden —
+          # no database credential, no API key — is given to this build.
+          NEXT_PUBLIC_INSFORGE_URL: ${{ vars.NEXT_PUBLIC_INSFORGE_URL }}
+          NEXT_PUBLIC_INSFORGE_ANON_KEY: ${{ vars.NEXT_PUBLIC_INSFORGE_ANON_KEY }}
+          NEXT_PUBLIC_SITE_URL: ${{ vars.NEXT_PUBLIC_SITE_URL }}
+          NEXT_PUBLIC_CMS_URL: ${{ vars.NEXT_PUBLIC_CMS_URL }}
+          NEXT_PUBLIC_GOOGLE_MAPS_API_KEY: ${{ vars.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY }}
+        run: |
+          set -euo pipefail
+
+          if [ -z "${NEXT_PUBLIC_INSFORGE_URL}" ] || [ -z "${NEXT_PUBLIC_INSFORGE_ANON_KEY}" ]; then
+            echo "::error::NEXT_PUBLIC_INSFORGE_URL and NEXT_PUBLIC_INSFORGE_ANON_KEY must be set as repository variables. Without them the browser bundle points at no backend."
+            exit 1
+          fi
+
+          owner=$(echo '${{ github.repository_owner }}' | tr '[:upper:]' '[:lower:]')
+          image="ghcr.io/${owner}/wildgrove-${{ matrix.app }}"
+          sha=$(echo '${{ github.sha }}' | cut -c1-12)
+          db=postgresql://wildgrove:throwaway@127.0.0.1:5432/wildgrove
+
+          # --network=host lets the build stage reach the throwaway database,
+          # which is published on the runner's loopback by the service above.
+          docker build \
+            --network=host \
+            -f "wildgrove-${{ matrix.app }}/Dockerfile" \
+            -t "${image}:${VERSION}" \
+            -t "${image}:${sha}" \
+            --build-arg "NPM_VERSION=${NPM_VERSION}" \
+            --build-arg "DATABASE_URL=${db}" \
+            --build-arg "DIRECT_URL=${db}" \
+            --build-arg "NEXT_PUBLIC_INSFORGE_URL=${NEXT_PUBLIC_INSFORGE_URL}" \
+            --build-arg "NEXT_PUBLIC_INSFORGE_ANON_KEY=${NEXT_PUBLIC_INSFORGE_ANON_KEY}" \
+            --build-arg "NEXT_PUBLIC_SITE_URL=${NEXT_PUBLIC_SITE_URL}" \
+            --build-arg "NEXT_PUBLIC_CMS_URL=${NEXT_PUBLIC_CMS_URL}" \
+            --build-arg "NEXT_PUBLIC_GOOGLE_MAPS_API_KEY=${NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}" \
+            .
+
+          # The image must carry no environment file. The Dockerfile's exclusion
+          # list is what prevents it; this is the check that the list worked.
+          leaked=$(docker run --rm --entrypoint sh "${image}:${sha}" -c \
+            'find / -xdev \( -name ".env" -o -name ".env.*" \) -not -name "*.example" 2>/dev/null | head -5')
+          if [ -n "$leaked" ]; then
+            echo "::error::The image carries environment files:"; echo "$leaked"; exit 1
+          fi
+          echo "No environment files in the image."
+
+          docker push "${image}:${VERSION}"
+          docker push "${image}:${sha}"
+
+          # The storefront also ships a migrator: a separate one-shot image that
+          # carries the schema engine and the migration history, so the
+          # container serving the public does not have to. Only the storefront
+          # migrates, so the panel has no equivalent.
+          if [ "${{ matrix.app }}" = "web" ]; then
+            migrate_image="ghcr.io/${owner}/wildgrove-migrate"
+            docker tag wildgrove-migrate:ci "${migrate_image}:${VERSION}"
+            docker tag wildgrove-migrate:ci "${migrate_image}:${sha}"
+            docker push "${migrate_image}:${VERSION}"
+            docker push "${migrate_image}:${sha}"
+          fi
+
+          {
+            echo "### wildgrove-${{ matrix.app }}"
+            echo ""
+            echo "| | |"
+            echo "|---|---|"
+            echo "| Version | \`${VERSION}\` |"
+            echo "| Commit | \`${sha}\` |"
+            echo "| Image | \`${image}:${VERSION}\` |"
+            echo ""
+            echo "Publishing is not deploying. On the server, in the directory that holds \`compose.yaml\`:"
+            echo ""
+            echo '```bash'
+            echo "./scripts/deploy.sh ${{ matrix.app }} ${image}:${VERSION}"
+            echo '```'
+            echo "From the owner's checkout, wait for this build and deploy with:"
+            echo '```bash'
+            echo "./scripts/ship.sh ${sha}"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"

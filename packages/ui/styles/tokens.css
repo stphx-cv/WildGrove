@@ -1,0 +1,499 @@
+/* ══════════════════════════════════════════════════════════════════
+   WILD GROVE — DESIGN TOKENS (Tailwind CSS v4)
+   Organic Luxury · Deep forest greens · Warm amber accents
+
+   Shared by wildgrove-web and wildgrove-cms. Each app imports this from its
+   own globals.css, right after `@import "tailwindcss"`, and declares
+   `@source "../../packages/ui"` so Tailwind scans the shared components.
+
+   App-specific rules (section padding, grain overlay, scroll animations) stay
+   in that app's globals.css. Scrollbars are shared: both apps inherit the
+   branded bar from this file.
+   ══════════════════════════════════════════════════════════════════ */
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* ══════════════════════════════════════════════════════════════════
+   WILD GROVE — DESIGN SYSTEM (Tailwind CSS v4)
+   Organic Luxury · Deep forest greens · Warm amber accents
+   ══════════════════════════════════════════════════════════════════ */
+
+/* ── Design Tokens ────────────────────────────────────────────── */
+@theme inline {
+  /* Typography */
+  --font-display: var(--font-playfair), Georgia, serif;
+  --font-body: var(--font-dm-sans), system-ui, sans-serif;
+
+  /* ── Light Mode Brand Colors ── */
+  --color-wg-bg: #E9EEE4;
+  /* light sage — tinted, reads as clearly not-white */
+  --color-wg-surface: #F3F6F0;
+  /* slightly lighter sage for cards/surfaces */
+  --color-wg-primary: #3A5A40;
+  --color-wg-secondary: #A8C5A0;
+  --color-wg-accent: #A26A31;
+  --color-wg-accent-hover: #885624;
+  /* Both amber tones hold white text at 4.5:1 or more (4.52 and 6.17). The
+     primary button uses them in dark mode too; the dark-mode ambers below
+     stay as they are, because they are text colours on the dark background. */
+  --color-wg-text: #1A1A18;
+  --color-wg-muted: #566650;
+  --color-wg-border: #CDD4C7;
+  /* sage-tinted border */
+
+  /* ── Dark Mode Brand Colors ── */
+  --color-wg-dark-bg: #0E1A12;
+  --color-wg-dark-surface: #162019;
+  --color-wg-dark-raised: #1E2D22;
+  --color-wg-dark-border: rgba(168, 197, 160, 0.12);
+  --color-wg-dark-text: #EEF1EC;
+  --color-wg-dark-muted: #8FA98C;
+  --color-wg-dark-primary: #5A8A60;
+  --color-wg-dark-accent: #D4944A;
+  --color-wg-dark-accent-hover: #E5A55B;
+
+  /* ── Border Radius ── */
+  --radius-brand: 0.75rem;
+  --radius-card: 1rem;
+
+  /* ── Shadows (Light Mode) ── */
+  --shadow-card: 0 2px 12px rgba(58, 90, 64, 0.08);
+  --shadow-elevated: 0 8px 32px rgba(58, 90, 64, 0.12);
+
+  /* ── Glows (Dark Mode elevation) ── */
+  --shadow-glow-sm: 0 0 12px rgba(90, 138, 96, 0.25);
+  --shadow-glow-md: 0 0 24px rgba(90, 138, 96, 0.30);
+  --shadow-glow-lg: 0 0 40px rgba(90, 138, 96, 0.35);
+
+  /* ── Animations ── */
+  --animate-fade-up: fadeUp 0.6s ease forwards;
+  --animate-fade-in: fadeIn 0.5s ease forwards;
+  --animate-shimmer: shimmer 1.5s ease-in-out infinite;
+  --animate-float: float 4s ease-in-out infinite;
+  --animate-sage-bubble-ping: sageBubblePing 2.2s ease-out infinite;
+  --animate-sage-bubble-glow: sageBubbleGlow 2.2s ease-in-out infinite;
+  --animate-sage-bubble-ping-strong: sageBubblePingStrong 1.6s ease-out infinite;
+  --animate-sage-bubble-glow-strong: sageBubbleGlowStrong 1.6s ease-in-out infinite;
+}
+
+/* ── Keyframes ────────────────────────────────────────────────── */
+@keyframes fadeUp {
+  0% {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeIn {
+  0% {
+    opacity: 0;
+  }
+
+  100% {
+    opacity: 1;
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+@keyframes float {
+
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+@keyframes galleryFadeIn {
+  0% {
+    opacity: 0;
+  }
+
+  100% {
+    opacity: 1;
+  }
+}
+
+/* Sage floating bubble — attention ring + glow (size unchanged) */
+@keyframes sageBubblePing {
+  0% {
+    transform: scale(1);
+    opacity: 0.75;
+  }
+
+  65%,
+  100% {
+    transform: scale(1.2, 1.5);
+    opacity: 0;
+  }
+}
+
+@keyframes sageBubbleGlow {
+  0%,
+  100% {
+    box-shadow:
+      0 4px 16px rgba(58, 90, 64, 0.4),
+      0 0 0 0 rgba(193, 127, 58, 0.45);
+  }
+
+  50% {
+    box-shadow:
+      0 8px 28px rgba(58, 90, 64, 0.55),
+      0 0 0 9px rgba(193, 127, 58, 0.22);
+  }
+}
+
+@keyframes sageBubblePingStrong {
+  0% {
+    transform: scale(1);
+    opacity: 0.9;
+  }
+
+  60%,
+  100% {
+    transform: scale(1.26, 1.65);
+    opacity: 0;
+  }
+}
+
+@keyframes sageBubbleGlowStrong {
+  0%,
+  100% {
+    box-shadow:
+      0 6px 22px rgba(58, 90, 64, 0.5),
+      0 0 0 0 rgba(193, 127, 58, 0.65);
+  }
+
+  50% {
+    box-shadow:
+      0 10px 36px rgba(58, 90, 64, 0.65),
+      0 0 0 12px rgba(193, 127, 58, 0.32);
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   BASE LAYER
+   ══════════════════════════════════════════════════════════════════ */
+@layer base {
+  :root {
+    color-scheme: light dark;
+    scroll-behavior: smooth;
+    --wg-scrollbar-size: 0.6875rem;
+    --wg-scrollbar-thumb: color-mix(in srgb, var(--color-wg-primary) 55%, transparent);
+    --wg-scrollbar-thumb-hover: var(--color-wg-primary);
+    --wg-scrollbar-thumb-active: var(--color-wg-accent);
+    --wg-scrollbar-track: color-mix(in srgb, var(--color-wg-primary) 8%, transparent);
+    /* Colors for charts, which draw with inline styles and cannot use `dark:` classes. */
+    --wg-chart-surface: var(--color-wg-surface);
+    --wg-chart-border: var(--color-wg-border);
+    --wg-chart-muted: var(--color-wg-muted);
+    --wg-chart-text: var(--color-wg-text);
+    --wg-chart-accent: var(--color-wg-accent);
+  }
+
+  .dark {
+    --wg-scrollbar-thumb: color-mix(in srgb, var(--color-wg-dark-primary) 58%, transparent);
+    --wg-scrollbar-thumb-hover: var(--color-wg-dark-primary);
+    --wg-scrollbar-thumb-active: var(--color-wg-dark-accent);
+    --wg-scrollbar-track: color-mix(in srgb, var(--color-wg-dark-primary) 12%, transparent);
+    --wg-chart-surface: var(--color-wg-dark-surface);
+    --wg-chart-border: var(--color-wg-dark-border);
+    --wg-chart-muted: var(--color-wg-dark-muted);
+    --wg-chart-text: var(--color-wg-dark-text);
+    --wg-chart-accent: var(--color-wg-dark-accent);
+  }
+
+  /* Light mode (default) */
+  body {
+    font-family: var(--font-body);
+    color: var(--color-wg-text);
+    background-color: var(--color-wg-bg);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    transition: background-color 0.3s ease, color 0.3s ease;
+  }
+
+  /* Dark mode */
+  .dark body {
+    color: var(--color-wg-dark-text);
+    background-color: var(--color-wg-dark-bg);
+  }
+
+  ::selection {
+    background-color: var(--color-wg-primary);
+    color: white;
+  }
+
+  .dark ::selection {
+    background-color: var(--color-wg-dark-primary);
+    color: var(--color-wg-dark-bg);
+  }
+
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-display);
+  }
+
+  /* Smooth focus ring for accessibility. Its amber is written out instead of
+     using --color-wg-accent: the accent is dark enough for white button text,
+     and the ring keeps the lighter tone. */
+  *:focus-visible {
+    outline: 2px solid #C17F3A;
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+
+  .dark *:focus-visible {
+    outline-color: var(--color-wg-dark-accent);
+  }
+
+  /* Branded scrollbars — storefront, CMS sidebar, CMS main, nested panels.
+     Firefox uses scrollbar-width / scrollbar-color. WebKit (Chrome, Edge,
+     Safari) uses the ::-webkit-scrollbar rules. Intentionally hidden bars
+     keep `[scrollbar-width:none] [&::-webkit-scrollbar]:hidden`, which live
+     in the utilities layer and win over these base rules. */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--wg-scrollbar-thumb) var(--wg-scrollbar-track);
+  }
+
+  *::-webkit-scrollbar {
+    width: var(--wg-scrollbar-size);
+    height: var(--wg-scrollbar-size);
+  }
+
+  *::-webkit-scrollbar-track {
+    background: var(--wg-scrollbar-track);
+    border-radius: 9999px;
+  }
+
+  *::-webkit-scrollbar-thumb {
+    background-color: var(--wg-scrollbar-thumb);
+    border-radius: 9999px;
+    border: 3px solid transparent;
+    background-clip: padding-box;
+  }
+
+  *::-webkit-scrollbar-thumb:hover {
+    background-color: var(--wg-scrollbar-thumb-hover);
+    background-clip: padding-box;
+  }
+
+  *::-webkit-scrollbar-thumb:active {
+    background-color: var(--wg-scrollbar-thumb-active);
+    background-clip: padding-box;
+  }
+
+  *::-webkit-scrollbar-button,
+  *::-webkit-scrollbar-button:start:decrement,
+  *::-webkit-scrollbar-button:end:increment,
+  *::-webkit-scrollbar-button:single-button,
+  *::-webkit-scrollbar-button:double-button {
+    display: none;
+    width: 0;
+    height: 0;
+  }
+
+  *::-webkit-scrollbar-corner {
+    background: transparent;
+  }
+}
+
+/* ── First-load image reveal ──────────────────────────────────── */
+@layer components {
+  /* ── Checkboxes and radios ──
+     A native checkbox draws the operating system's own control — a blue tick
+     on Windows, a grey-blue one on Linux — which belongs to no palette in this
+     project. `accent-color` only repaints the fill and leaves the box, the
+     border and the tick shape to the browser, so the CMS never looked the same
+     on two machines.
+
+     These two classes replace the control: sage-tinted border at rest, forest
+     green when checked, a drawn tick, and the dark pair in dark mode. Size is
+     left to the caller's Tailwind utilities (`w-4 h-4`, `w-3.5 h-3.5`) — the
+     tick scales with the box. Add `.wg-control-accent` or `.wg-control-danger`
+     to recolour one instance without repeating the rest. */
+  .wg-check,
+  .wg-radio {
+    --wg-control-color: var(--color-wg-primary);
+    --wg-control-mark: #FFFFFF;
+    --wg-control-surface: var(--color-wg-surface);
+    --wg-control-rest-border: 42%;
+
+    appearance: none;
+    -webkit-appearance: none;
+    flex: none;
+    position: relative;
+    display: inline-block;
+    width: 1.0625rem;
+    height: 1.0625rem;
+    margin: 0;
+    vertical-align: middle;
+    border: 1.5px solid color-mix(in srgb, var(--wg-control-color) var(--wg-control-rest-border), transparent);
+    background-color: var(--wg-control-surface);
+    cursor: pointer;
+    transition: background-color 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
+  }
+
+  .wg-check {
+    border-radius: 0.375rem;
+  }
+
+  .wg-radio {
+    border-radius: 9999px;
+  }
+
+  /* The mark is positioned rather than laid out, so its percentages resolve
+     against the box itself and it keeps its proportions at any size. */
+  .wg-check::before,
+  .wg-radio::before {
+    content: "";
+    position: absolute;
+    background-color: var(--wg-control-mark);
+    transform: scale(0);
+    transition: transform 0.15s cubic-bezier(0.2, 0.9, 0.3, 1.35);
+  }
+
+  /* The tick, drawn rather than imported, so it follows the mark colour. */
+  .wg-check::before {
+    inset: 16%;
+    clip-path: polygon(14% 45%, 0 62%, 40% 100%, 100% 20%, 84% 6%, 39% 69%);
+  }
+
+  .wg-radio::before {
+    inset: 24%;
+    border-radius: 9999px;
+  }
+
+  .wg-check:hover:not(:disabled),
+  .wg-radio:hover:not(:disabled) {
+    border-color: color-mix(in srgb, var(--wg-control-color) 75%, transparent);
+  }
+
+  .wg-check:checked,
+  .wg-check:indeterminate,
+  .wg-radio:checked {
+    background-color: var(--wg-control-color);
+    border-color: var(--wg-control-color);
+  }
+
+  .wg-check:checked::before,
+  .wg-radio:checked::before {
+    transform: scale(1);
+  }
+
+  /* "Some but not all" — the header box over a page of rows. */
+  .wg-check:indeterminate::before {
+    inset: calc(50% - 1px) 21%;
+    clip-path: none;
+    border-radius: 1px;
+    transform: scale(1);
+  }
+
+  .wg-check:disabled,
+  .wg-radio:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+
+  .wg-control-accent {
+    --wg-control-color: var(--color-wg-accent);
+  }
+
+  .wg-control-danger {
+    --wg-control-color: #DC2626;
+  }
+
+  .dark .wg-check,
+  .dark .wg-radio {
+    --wg-control-color: var(--color-wg-dark-primary);
+    --wg-control-mark: var(--color-wg-dark-bg);
+    --wg-control-surface: var(--color-wg-dark-raised);
+    --wg-control-rest-border: 55%;
+  }
+
+  .dark .wg-control-accent {
+    --wg-control-color: var(--color-wg-dark-accent);
+  }
+
+  .dark .wg-control-danger {
+    --wg-control-color: #F87171;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+
+    .wg-check,
+    .wg-radio,
+    .wg-check::before,
+    .wg-radio::before {
+      transition: none;
+    }
+  }
+
+  /* ── First-load image reveal (components/ui/FadeInImage.tsx) ──
+     An image that has not been downloaded yet is held invisible and fades in
+     once it decodes, so uncached images stop popping in. Both classes are added
+     client-side only — server markup keeps images fully visible. */
+  .img-reveal-pending {
+    opacity: 0;
+  }
+
+  .img-reveal-done {
+    animation: fadeIn 0.5s ease forwards;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+
+    .img-reveal-pending,
+    .img-reveal-done {
+      opacity: 1;
+      animation: none;
+    }
+  }
+
+  /* Compact scrollbar for dense panels (Sage chat transcript). */
+  .chat-scroll {
+    scrollbar-width: thin;
+    scrollbar-color: var(--wg-scrollbar-thumb) transparent;
+  }
+
+  .chat-scroll::-webkit-scrollbar {
+    width: 4px;
+    height: 4px;
+  }
+
+  .chat-scroll::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .chat-scroll::-webkit-scrollbar-thumb {
+    border: 0;
+    background-color: var(--wg-scrollbar-thumb);
+  }
+
+  .chat-scroll::-webkit-scrollbar-thumb:hover {
+    background-color: var(--wg-scrollbar-thumb-hover);
+  }
+
+  .chat-scroll::-webkit-scrollbar-thumb:active {
+    background-color: var(--wg-scrollbar-thumb-active);
+  }
+}

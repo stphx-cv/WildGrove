@@ -1,0 +1,37 @@
+{
+  "name": "wildgrove-cms",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev -p 8640",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint"
+  },
+  "dependencies": {
+    "@insforge/sdk": "^1.5.2",
+    "@react-pdf/renderer": "^4.5.1",
+    "@vis.gl/react-google-maps": "~1.10.0",
+    "@wildgrove/core": "*",
+    "@wildgrove/db": "*",
+    "@wildgrove/ui": "*",
+    "next": "^16.3.5",
+    "nodemailer": "^10.0.10",
+    "react": "19.3.0",
+    "react-dom": "19.3.0",
+    "recharts": "^3.8.1",
+    "swr": "^2.5.1",
+    "zod": "^4.6.5"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4",
+    "@types/google.maps": "~3.66.3",
+    "@types/node": "^24.13.6",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "eslint": "^9",
+    "eslint-config-next": "16.3.5",
+    "tailwindcss": "^4",
+    "typescript": "^7.0.2"
+  }
+}

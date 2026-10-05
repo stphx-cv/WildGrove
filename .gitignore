@@ -1,0 +1,42 @@
+# ── Dependencias y compilación ───────────────────────────────────
+node_modules/
+.turbo/
+*/.next/
+packages/db/generated/
+
+# ── Entorno ──────────────────────────────────────────────────────
+# Los .env.example SÍ se suben: son la plantilla que necesita quien
+# clone el proyecto. Por eso los patrones de abajo son específicos y
+# no un `.env*` que se los llevaría por delante.
+.env
+.env.local
+.env.*.local
+*/.env
+*/.env.local
+*/.env.*.local
+packages/db/.env
+packages/db/.env.local
+# Los que lee compose.yaml en el servidor. Van uno por app, y .env.deploy.example
+# es la plantilla que sí se sube.
+.env.web
+.env.cms
+.env.ship
+
+# ── Herramientas de IA ───────────────────────────────────────────
+# AGENTS.md y CLAUDE.md sí se suben: son punteros a wildgrove-vault/rules/.
+# Lo que no se sube es la configuración local de cada herramienta.
+.claude/
+.codex/
+.cursor/
+.insforge/
+.agents/
+
+# ── Sistema y editor ─────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+*.swp
+
+# ── Lo que no se sube nunca ──────────────────────────────────────
+# Planes que necesitan detalle privado y notas de trabajo. Solo existe
+# en la copia de trabajo. Ver wildgrove-vault/rules/06-plans.md.
+wildgrove-vault/private/

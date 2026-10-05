@@ -1,0 +1,39 @@
+{
+  "name": "wildgrove-web",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev -p 4680",
+    "build": "node ../packages/db/scripts/migrate-deploy.mjs && next build",
+    "start": "next start",
+    "lint": "eslint"
+  },
+  "dependencies": {
+    "@insforge/sdk": "^1.5.2",
+    "@modelcontextprotocol/sdk": "^1.30.0",
+    "@react-pdf/renderer": "^4.5.1",
+    "@vis.gl/react-google-maps": "~1.10.0",
+    "@wildgrove/core": "*",
+    "@wildgrove/db": "*",
+    "@wildgrove/ui": "*",
+    "next": "^16.3.5",
+    "next-intl": "^4.14.5",
+    "next-themes": "^0.4.6",
+    "nodemailer": "^10.0.10",
+    "openai": "^7.20.0",
+    "react": "19.3.0",
+    "react-dom": "19.3.0",
+    "zod": "^4.6.5"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4",
+    "@types/node": "^24.13.6",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "eslint": "^9",
+    "eslint-config-next": "16.3.5",
+    "prisma": "^7.8.0",
+    "tailwindcss": "^4",
+    "typescript": "^7.0.2"
+  }
+}

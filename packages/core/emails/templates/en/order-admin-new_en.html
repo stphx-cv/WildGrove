@@ -1,0 +1,85 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>New Order | Wild Grove Admin</title>
+</head>
+<body style="margin:0;padding:0;background-color:#E9EEE4;font-family:'DM Sans',system-ui,-apple-system,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="background-color:#E9EEE4;padding:40px 16px;">
+    <tr><td align="center">
+      <table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="max-width:560px;width:100%;">
+
+        <!-- HEADER -->
+        <tr><td align="center" style="padding-bottom:28px;">
+          <table cellpadding="0" cellspacing="0" role="presentation"><tr>
+            <td style="padding-right:10px;vertical-align:middle;">
+              <img src="https://www.wildgrove.cv/png/wildgrove_logo.png" width="36" height="36" alt="Wild Grove" style="display:block;" />
+            </td>
+            <td style="vertical-align:middle;">
+              <span style="font-family:Georgia,'Times New Roman',serif;font-size:22px;font-weight:700;color:#3A5A40;letter-spacing:-0.3px;">Wild Grove</span>
+              <span style="display:block;font-size:11px;color:#8FA98C;text-transform:uppercase;letter-spacing:0.1em;">Admin Notification</span>
+            </td>
+          </tr></table>
+        </td></tr>
+
+        <!-- CARD -->
+        <tr><td style="background-color:#F3F6F0;border-radius:16px;box-shadow:0 2px 24px rgba(58,90,64,0.10);overflow:hidden;">
+          <table width="100%" cellpadding="0" cellspacing="0" role="presentation">
+            <tr><td style="background-color:#3A5A40;height:4px;font-size:0;line-height:0;">&nbsp;</td></tr>
+          </table>
+          <table width="100%" cellpadding="0" cellspacing="0" role="presentation">
+            <tr><td style="padding:44px 44px 16px;">
+
+              <h1 style="margin:0 0 12px;font-family:Georgia,'Times New Roman',serif;font-size:26px;font-weight:700;color:#1A1A18;text-align:center;line-height:1.25;">&#x1F6D2; New Order Received</h1>
+              <p style="margin:0 0 32px;font-size:15px;color:#566650;text-align:center;line-height:1.6;">A new order has been placed and is waiting for preparation.</p>
+
+              <table width="100%" cellpadding="0" cellspacing="0" role="presentation">
+                <tr><td style="border-top:1px solid #CDD4C7;padding-top:28px;padding-bottom:24px;">
+                  <table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="background-color:#E9EEE4;border-radius:10px;border:1px solid #CDD4C7;">
+                    <tr><td style="padding:16px 20px 12px;">
+                      <span style="font-size:11px;color:#8FA98C;text-transform:uppercase;letter-spacing:0.08em;font-weight:600;display:block;margin-bottom:4px;">Order</span>
+                      <span style="font-size:20px;color:#3A5A40;font-weight:700;">#{{ORDER_NUMBER}}</span>
+                    </td></tr>
+                    <tr><td style="border-top:1px solid #CDD4C7;padding:12px 20px;">
+                      <span style="font-size:11px;color:#8FA98C;text-transform:uppercase;letter-spacing:0.08em;font-weight:600;display:block;margin-bottom:4px;">Customer</span>
+                      <span style="font-size:15px;color:#1A1A18;font-weight:600;">{{CUSTOMER_NAME}}</span>
+                    </td></tr>
+                    <tr><td style="border-top:1px solid #CDD4C7;padding:12px 20px;">
+                      <span style="font-size:11px;color:#8FA98C;text-transform:uppercase;letter-spacing:0.08em;font-weight:600;display:block;margin-bottom:4px;">Fulfillment</span>
+                      <span style="font-size:15px;color:#1A1A18;font-weight:600;">{{FULFILLMENT}}</span>
+                    </td></tr>
+                    <tr><td style="border-top:1px solid #CDD4C7;padding:12px 20px;">
+                      <span style="font-size:11px;color:#8FA98C;text-transform:uppercase;letter-spacing:0.08em;font-weight:600;display:block;margin-bottom:4px;">Items</span>
+                      <span style="font-size:14px;color:#1A1A18;">{{ITEMS_SUMMARY}}</span>
+                    </td></tr>
+                    <tr><td style="border-top:1px solid #CDD4C7;padding:12px 20px 14px;">
+                      <span style="font-size:11px;color:#8FA98C;text-transform:uppercase;letter-spacing:0.08em;font-weight:600;display:block;margin-bottom:4px;">Total</span>
+                      <span style="font-size:18px;color:#3A5A40;font-weight:700;">{{CURRENCY_SYMBOL}}{{TOTAL}}</span>
+                    </td></tr>
+                  </table>
+                </td></tr>
+              </table>
+
+            </td></tr>
+            <tr><td style="padding:0 44px 36px;">
+              <a href="{{ADMIN_ORDER_URL}}" style="display:block;text-align:center;background-color:#3A5A40;color:#ffffff;padding:14px 28px;border-radius:8px;text-decoration:none;font-size:14px;font-weight:600;letter-spacing:0.02em;">
+                Manage Order
+              </a>
+            </td></tr>
+          </table>
+        </td></tr>
+
+        <!-- FOOTER -->
+        <tr><td style="padding:28px 0 8px;">
+          <p style="margin:0;font-size:12px;color:#566650;text-align:center;line-height:1.7;">
+            This notification was sent to Wild Grove staff.<br/>
+            <a href="{{CMS_URL}}" style="color:#566650;text-decoration:underline;">Admin Panel</a>
+          </p>
+        </td></tr>
+
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>

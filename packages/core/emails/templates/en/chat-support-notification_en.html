@@ -1,0 +1,209 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Chat Support Request | Wild Grove Admin</title>
+</head>
+<body style="margin:0;padding:0;background-color:#E9EEE4;font-family:'DM Sans',system-ui,-apple-system,sans-serif;">
+
+  <table width="100%" cellpadding="0" cellspacing="0" role="presentation"
+    style="background-color:#E9EEE4;padding:40px 16px;">
+    <tr>
+      <td align="center">
+        <table width="100%" cellpadding="0" cellspacing="0" role="presentation"
+          style="max-width:580px;width:100%;">
+
+          <!-- HEADER -->
+          <tr>
+            <td align="center" style="padding-bottom:28px;">
+              <table cellpadding="0" cellspacing="0" role="presentation">
+                <tr>
+                  <td style="padding-right:10px;vertical-align:middle;">
+                    <img src="https://www.wildgrove.cv/png/wildgrove_logo.png"
+                      width="36" height="36" alt="Wild Grove"
+                      style="display:block;" />
+                  </td>
+                  <td style="vertical-align:middle;">
+                    <span style="font-family:Georgia,'Times New Roman',serif;font-size:22px;
+                      font-weight:700;color:#3A5A40;letter-spacing:-0.3px;">
+                      Wild Grove
+                    </span>
+                    <span style="display:block;font-size:11px;color:#8FA98C;
+                      text-transform:uppercase;letter-spacing:0.12em;margin-top:2px;">
+                      Staff Notification
+                    </span>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- CARD -->
+          <tr>
+            <td style="background-color:#F3F6F0;border-radius:16px;
+              box-shadow:0 2px 24px rgba(58,90,64,0.10);overflow:hidden;">
+
+              <!-- Amber top bar -->
+              <table width="100%" cellpadding="0" cellspacing="0" role="presentation">
+                <tr>
+                  <td style="background-color:#A26A31;height:4px;font-size:0;line-height:0;">&nbsp;</td>
+                </tr>
+              </table>
+
+              <!-- Card body -->
+              <table width="100%" cellpadding="0" cellspacing="0" role="presentation">
+                <tr>
+                  <td style="padding:40px 44px 16px;">
+
+                    <!-- Chat icon + badge -->
+                    <table width="100%" cellpadding="0" cellspacing="0" role="presentation"
+                      style="margin-bottom:24px;">
+                      <tr>
+                        <td align="center">
+                          <table cellpadding="0" cellspacing="0" role="presentation">
+                            <tr>
+                              <td width="64" height="64" align="center" valign="middle"
+                                style="width:64px;height:64px;border-radius:50%;
+                                background-color:#A26A31;text-align:center;
+                                font-size:28px;line-height:64px;">
+                                &#128172;
+                              </td>
+                            </tr>
+                          </table>
+                          <table cellpadding="0" cellspacing="0" role="presentation"
+                            style="margin-top:14px;">
+                            <tr>
+                              <td style="background-color:#FEF3C7;border-radius:20px;
+                                padding:4px 14px;">
+                                <span style="font-size:12px;font-weight:600;color:#92400E;
+                                  text-transform:uppercase;letter-spacing:0.08em;">
+                                  Chat Support
+                                </span>
+                              </td>
+                            </tr>
+                          </table>
+                        </td>
+                      </tr>
+                    </table>
+
+                    <!-- Heading -->
+                    <h1 style="margin:0 0 8px;font-family:Georgia,'Times New Roman',serif;
+                      font-size:26px;font-weight:700;color:#1A1A18;text-align:center;
+                      line-height:1.25;letter-spacing:-0.5px;">
+                      Customer Needs Support
+                    </h1>
+                    <p style="margin:0 0 32px;font-size:14px;color:#566650;text-align:center;
+                      line-height:1.6;">
+                      A customer has requested live chat assistance via Sage · {{SUBMITTED_AT}}
+                    </p>
+
+                    <!-- Divider -->
+                    <table width="100%" cellpadding="0" cellspacing="0" role="presentation">
+                      <tr>
+                        <td style="border-top:1px solid #CDD4C7;padding-top:28px;">
+
+                          <!-- CUSTOMER INFO BLOCK -->
+                          <p style="margin:0 0 10px;font-size:11px;font-weight:600;
+                            color:#8FA98C;text-transform:uppercase;letter-spacing:0.1em;">
+                            Customer
+                          </p>
+                          <table width="100%" cellpadding="0" cellspacing="0" role="presentation"
+                            style="background-color:#E9EEE4;border-radius:10px;
+                            border:1px solid #CDD4C7;margin-bottom:20px;">
+                            <tr>
+                              <td style="padding:14px 20px 10px;">
+                                <span style="font-size:11px;color:#8FA98C;text-transform:uppercase;
+                                  letter-spacing:0.08em;font-weight:600;display:block;margin-bottom:3px;">
+                                  Name
+                                </span>
+                                <span style="font-size:15px;color:#1A1A18;font-weight:600;">
+                                  {{CUSTOMER_NAME}}
+                                </span>
+                              </td>
+                            </tr>
+                            <tr>
+                              <td style="border-top:1px solid #CDD4C7;padding:10px 20px;">
+                                <span style="font-size:11px;color:#8FA98C;text-transform:uppercase;
+                                  letter-spacing:0.08em;font-weight:600;display:block;margin-bottom:3px;">
+                                  Email
+                                </span>
+                                <span style="font-size:14px;color:#3A5A40;font-weight:500;">
+                                  {{CUSTOMER_EMAIL}}
+                                </span>
+                              </td>
+                            </tr>
+                            <tr>
+                              <td style="border-top:1px solid #CDD4C7;padding:10px 20px 14px;">
+                                <span style="font-size:11px;color:#8FA98C;text-transform:uppercase;
+                                  letter-spacing:0.08em;font-weight:600;display:block;margin-bottom:3px;">
+                                  Session
+                                </span>
+                                <span style="font-size:13px;color:#566650;font-family:monospace;">
+                                  #{{SESSION_ID}}
+                                </span>
+                              </td>
+                            </tr>
+                          </table>
+
+                          <!-- CONVERSATION PREVIEW -->
+                          <p style="margin:0 0 10px;font-size:11px;font-weight:600;
+                            color:#8FA98C;text-transform:uppercase;letter-spacing:0.1em;">
+                            Recent Conversation
+                          </p>
+                          <table width="100%" cellpadding="0" cellspacing="0" role="presentation"
+                            style="background-color:#E9EEE4;border-radius:10px;
+                            border:1px solid #CDD4C7;margin-bottom:20px;">
+                            <tr>
+                              <td style="padding:14px 20px;">
+                                <div style="font-size:13px;color:#1A1A18;line-height:1.7;">
+                                  {{MESSAGES}}
+                                </div>
+                              </td>
+                            </tr>
+                          </table>
+
+                        </td>
+                      </tr>
+                    </table>
+
+                  </td>
+                </tr>
+
+                <!-- Action note -->
+                <tr>
+                  <td style="padding:0 44px 36px;">
+                    <table width="100%" cellpadding="0" cellspacing="0" role="presentation">
+                      <tr>
+                        <td style="background-color:#E9EEE4;border-radius:10px;padding:16px 20px;">
+                          <p style="margin:0;font-size:12px;color:#566650;line-height:1.6;">
+                            <strong style="color:#3A5A40;">Action required:</strong>
+                            Please check the <strong>Chat</strong> section in the CMS to respond to this customer.
+                          </p>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+
+            </td>
+          </tr>
+
+          <!-- FOOTER -->
+          <tr>
+            <td style="padding:28px 0 8px;">
+              <p style="margin:0;font-size:12px;color:#566650;text-align:center;line-height:1.7;">
+                &copy; 2026 Wild Grove &middot; Internal notification | do not reply to this address<br/>
+                <a href="https://www.wildgrove.cv" style="color:#566650;text-decoration:underline;">wildgrove.cv</a>
+              </p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+
+</body>
+</html>

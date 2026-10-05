@@ -1,0 +1,87 @@
+# ══════════════════════════════════════════════════════════════════
+# The two applications, as they run on the project's own server.
+#
+# Each app is defined twice, as `blue` and `green`. Only one colour of each
+# serves traffic; the other is where the next version is started and checked
+# before anything is pointed at it. A deploy fills the idle colour, proves it
+# answers with real data, and only then moves the traffic. If the checks fail,
+# nothing moves and the colour that was already serving keeps serving.
+#
+# Neither colour carries proxy labels, on purpose. Routing is decided outside
+# this file, by a single record the deploy rewrites, because that switch moves
+# traffic without recreating the container — and recreating it would throw away
+# the warm cache the checks just built, handing the first visitor the empty menu
+# the whole exercise exists to avoid.
+#
+# Nothing here describes the machine. Networks, hostnames and image tags all
+# arrive from the environment, because this repository is public and a map of
+# the deployment does not belong in it. See wildgrove-vault/rules/03-never-do.md,
+# item 2. `.env.deploy.example` lists the names that have to be defined.
+# ══════════════════════════════════════════════════════════════════
+
+name: ${STACK_NAME:-wildgrove}
+
+x-app: &app
+  restart: unless-stopped
+  # A container that outgrows this is killed inside its own limit, so the deploy
+  # fails with a reason. The machine has no swap, and without a limit the kernel
+  # picks the victim itself — which would be the database, the biggest process
+  # on the box.
+  mem_limit: ${APP_MEM_LIMIT:-512m}
+  logging:
+    driver: json-file
+    options: { max-size: "10m", max-file: "3" }
+  networks:
+    # Reached by the reverse proxy.
+    - proxy
+    # Reaches the database without leaving the machine. This is what lets the
+    # database stop accepting connections from the public internet.
+    - backend
+
+x-web: &web
+  <<: *app
+  env_file: [ "${WEB_ENV_FILE:-./.env.web}" ]
+  volumes:
+    # Shared by both colours on purpose: optimized images are keyed by source
+    # URL and parameters, not by build, so a switch must not start from a cold
+    # cache and regenerate every size again on two processors. The generated
+    # *page* cache is deliberately not persisted — a new build should invalidate
+    # it, and the deploy rebuilds it before the switch.
+    - web-image-cache:/app/wildgrove-web/.next/cache/images
+
+x-cms: &cms
+  <<: *app
+  env_file: [ "${CMS_ENV_FILE:-./.env.cms}" ]
+  volumes:
+    - cms-image-cache:/app/wildgrove-cms/.next/cache/images
+
+services:
+  web-blue:
+    <<: *web
+    image: ${WEB_IMAGE_BLUE:-${WEB_IMAGE}}
+    container_name: ${STACK_NAME:-wildgrove}-web-blue
+  web-green:
+    <<: *web
+    image: ${WEB_IMAGE_GREEN:-${WEB_IMAGE}}
+    container_name: ${STACK_NAME:-wildgrove}-web-green
+
+  cms-blue:
+    <<: *cms
+    image: ${CMS_IMAGE_BLUE:-${CMS_IMAGE}}
+    container_name: ${STACK_NAME:-wildgrove}-cms-blue
+  cms-green:
+    <<: *cms
+    image: ${CMS_IMAGE_GREEN:-${CMS_IMAGE}}
+    container_name: ${STACK_NAME:-wildgrove}-cms-green
+
+volumes:
+  web-image-cache:
+  cms-image-cache:
+
+networks:
+  proxy:
+    name: ${PROXY_NETWORK}
+    external: true
+  backend:
+    name: ${BACKEND_NETWORK}
+    external: true
