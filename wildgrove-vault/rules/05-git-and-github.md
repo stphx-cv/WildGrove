@@ -30,7 +30,7 @@ Un agente puede hacer el `commit` cuando el propietario se lo pida. Lo que no ha
 
 ### "Haz commit y push" significa la secuencia entera
 
-Cuando el propietario pide commit y push, está autorizando **las cuatro operaciones de golpe**, y no hay que volver a preguntar por ninguna:
+Cuando el propietario pide commit y push, está autorizando **las 5 operaciones de golpe**, y no hay que volver a preguntar por ninguna:
 
 ```bash
 V=p1.0.0.0
@@ -39,11 +39,13 @@ F=wildgrove-vault/versions/preview/$V/02-$V-commit.md
 git push origin production
 git tag $V
 git push origin $V
+sed -n '/^## Qué cambió/,$p' "wildgrove-vault/versions/preview/$V/01-$V-changes.md" > /tmp/notas.md
+gh release create "$V" --title "Preview · $V" --notes-file /tmp/notas.md --verify-tag
 ```
 
-**La etiqueta no es un extra que se pregunta aparte: es parte de subir una versión.** Una versión sin etiqueta queda documentada pero no se puede abrir en GitHub, que es justo para lo que sirve el sistema de versiones.
+**La etiqueta y la release no son extras que se preguntan aparte: son parte de subir una versión.** Una versión sin etiqueta queda documentada pero no se puede abrir en GitHub, que es justo para lo que sirve el sistema de versiones. Una versión sin release no aparece en la página de releases, que es lo primero que mira quien entra buscando la última versión. Cómo se escriben su título y sus notas está en [La release, después de la etiqueta](#la-release-después-de-la-etiqueta).
 
-Lo que sí sigue necesitando permiso cada vez es **empezar**: mientras el propietario no lo pida, no hay push ni etiqueta, por muy terminado que esté el trabajo. Y si en vez de la secuencia completa pide solo el commit, se hace solo el commit.
+Lo que sí sigue necesitando permiso cada vez es **empezar**: mientras el propietario no lo pida, no hay push, ni etiqueta, ni release, por muy terminado que esté el trabajo. Y si en vez de la secuencia completa pide solo el commit, se hace solo el commit.
 
 ## El mensaje del commit no se redacta sobre la marcha
 
