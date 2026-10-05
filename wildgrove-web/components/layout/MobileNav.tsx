@@ -16,6 +16,7 @@ import { useCurrency } from "@/components/providers/CurrencyProvider"
 import { createClient } from "@wildgrove/core/clients/client"
 import { SocialLinks, type SocialLinkView } from "@wildgrove/ui/social/SocialLinks"
 import { useDrawerFocus } from "@/components/ui/useDrawerFocus"
+import { clearCheckoutDraftOnSignOut } from "@/components/cart/checkout-draft"
 import {
     ArrowRightOnRectangleIcon,
     BarsIcon,
@@ -167,6 +168,7 @@ export function MobileNav({ links, user, isAdmin, visitInfo }: MobileNavProps) {
     const handleNavClick = useCallback(() => setIsOpen(false), [])
 
     async function handleSignOut() {
+        clearCheckoutDraftOnSignOut()
         await insforge.auth.signOut()
         setIsOpen(false)
         router.refresh()

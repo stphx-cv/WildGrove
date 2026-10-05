@@ -13,6 +13,7 @@ import { Switch } from "@wildgrove/ui/Switch"
 import { SocialIcon } from "@wildgrove/ui/social/SocialIcon"
 import { PhoneInput } from "@wildgrove/ui/PhoneInput"
 import { toE164 } from "@wildgrove/core/public-contact"
+import { isValidEmail } from "@wildgrove/core/validation"
 import { Textarea } from "@wildgrove/ui/Textarea"
 import { AdminSelect, type SelectOption } from "@/components/AdminSelect"
 import { AdminTimePicker } from "@/components/AdminTimePicker"
@@ -1122,13 +1123,13 @@ export default function SettingsPage() {
             return
         }
 
-        if (notifEmail.trim() !== "" && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(notifEmail.trim())) {
+        if (notifEmail.trim() !== "" && !isValidEmail(notifEmail.trim())) {
             setNotifEmailError("Enter a valid email address or leave blank.")
             setBulkBarError("Fix validation errors before saving.")
             return
         }
 
-        if (publicContactEmail.trim() !== "" && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(publicContactEmail.trim())) {
+        if (publicContactEmail.trim() !== "" && !isValidEmail(publicContactEmail.trim())) {
             setPublicContactEmailError("Enter a valid email address or leave blank.")
             setBulkBarError("Fix validation errors before saving.")
             return

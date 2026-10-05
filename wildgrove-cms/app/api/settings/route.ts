@@ -48,6 +48,7 @@ import {
     isChatMode,
 } from "@wildgrove/core/chat/chat-settings"
 import { fetchStorefrontChatStatus } from "@wildgrove/core/chat/storefront-chat-status"
+import { isValidEmail } from "@wildgrove/core/validation"
 import {
     DEFAULT_INITIAL_BALANCE,
     MAX_INITIAL_BALANCE,
@@ -498,7 +499,7 @@ export async function PATCH(request: NextRequest) {
     if (publicContactEmail !== undefined) {
         if (typeof publicContactEmail !== "string")
             return NextResponse.json({ success: false, error: "Invalid value for publicContactEmail." }, { status: 400 })
-        if (publicContactEmail.trim() !== "" && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(publicContactEmail.trim()))
+        if (publicContactEmail.trim() !== "" && !isValidEmail(publicContactEmail.trim()))
             return NextResponse.json(
                 { success: false, error: "publicContactEmail must be a valid email address or empty." },
                 { status: 400 }
@@ -542,7 +543,7 @@ export async function PATCH(request: NextRequest) {
     if (notificationEmail !== undefined) {
         if (typeof notificationEmail !== "string")
             return NextResponse.json({ success: false, error: "Invalid value for notificationEmail." }, { status: 400 })
-        if (notificationEmail !== "" && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(notificationEmail))
+        if (notificationEmail !== "" && !isValidEmail(notificationEmail))
             return NextResponse.json({ success: false, error: "notificationEmail must be a valid email address." }, { status: 400 })
     }
 

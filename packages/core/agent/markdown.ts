@@ -43,9 +43,13 @@ export function bulletList(items: Array<string | null | undefined>): string | nu
     return rows.map((i) => `- ${i.trim()}`).join("\n")
 }
 
-/** Escapes the pipe so a value cannot break out of a table cell. */
+/**
+ * Escapes the pipe so a value cannot break out of a table cell. The backslash
+ * goes first: left alone, a `\|` already in the value would come out as `\\|`,
+ * an escaped backslash followed by a bare pipe.
+ */
 export function cell(value: string): string {
-    return value.replace(/\|/g, "\\|").replace(/\n+/g, " ").trim()
+    return value.replace(/\\/g, "\\\\").replace(/\|/g, "\\|").replace(/\n+/g, " ").trim()
 }
 
 export function table(headers: string[], rows: string[][]): string | null {

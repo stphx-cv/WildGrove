@@ -15,6 +15,11 @@ import { useTranslations, useLocale } from "next-intl"
 import { useRouter } from "@/i18n/routing"
 import { Link } from "@/i18n/routing"
 import { useCart } from "@/components/providers/CartProvider"
+import {
+  CHECKOUT_DRAFT_SIGNED_OUT_EVENT,
+  CHECKOUT_DRAFT_STORAGE_KEY,
+  clearCheckoutDraftStorage,
+} from "@/components/cart/checkout-draft"
 import { getCurrencySymbol } from "@wildgrove/core/currency"
 import type { CheckoutSwitches } from "@wildgrove/core/settings"
 import { Textarea } from "@wildgrove/ui/Textarea"
@@ -101,11 +106,12 @@ interface BillingData {
 
 const STEPS: Step[] = ["cart", "fulfillment", "billing", "payment", "review"]
 
-const CHECKOUT_DRAFT_STORAGE_KEY = "wg:checkoutDraft:v1"
 const CHECKOUT_DRAFT_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000
 
-interface CheckoutDraftV1 {
-  v: 1
+interface CheckoutDraft {
+  v: 2
+  /** The account that wrote it. Guests stop at the cart step and save nothing. */
+  userId: string
   locale: string
   step: Step
   fulfillment: FulfillmentMethod
@@ -119,13 +125,14 @@ function isStep(value: unknown): value is Step {
   return typeof value === "string" && (STEPS as readonly string[]).includes(value)
 }
 
-function parseCheckoutDraft(raw: string | null): CheckoutDraftV1 | null {
+function parseCheckoutDraft(raw: string | null): CheckoutDraft | null {
   if (!raw) return null
   try {
     const parsed: unknown = JSON.parse(raw)
     if (!parsed || typeof parsed !== "object") return null
     const o = parsed as Record<string, unknown>
-    if (o.v !== 1) return null
+    if (o.v !== 2) return null
+    if (typeof o.userId !== "string") return null
     if (typeof o.locale !== "string") return null
     if (!isStep(o.step)) return null
     if (o.fulfillment !== "PICKUP" && o.fulfillment !== "DELIVERY") return null
@@ -146,7 +153,8 @@ function parseCheckoutDraft(raw: string | null): CheckoutDraftV1 | null {
     }
     const notes = typeof o.notes === "string" ? o.notes : ""
     return {
-      v: 1,
+      v: 2,
+      userId: o.userId,
       locale: o.locale,
       step: o.step,
       fulfillment: o.fulfillment,
@@ -160,11 +168,12 @@ function parseCheckoutDraft(raw: string | null): CheckoutDraftV1 | null {
   }
 }
 
-function clearCheckoutDraftStorage() {
+function saveCheckoutDraft(fields: Omit<CheckoutDraft, "v" | "savedAt">) {
+  const payload: CheckoutDraft = { v: 2, ...fields, savedAt: Date.now() }
   try {
-    sessionStorage.removeItem(CHECKOUT_DRAFT_STORAGE_KEY)
+    sessionStorage.setItem(CHECKOUT_DRAFT_STORAGE_KEY, JSON.stringify(payload))
   } catch {
-    /* ignore */
+    /* private mode / quota */
   }
 }
 
@@ -1069,11 +1078,12 @@ function CheckoutClientInner({ switches }: { switches: CheckoutSwitches }) {
   const [zoneRefusal, setZoneRefusal] = useState<{ addressId: string; notice: "noZone" | "minOrder" } | null>(null)
   const idempotencyKeyRef = useRef(crypto.randomUUID())
 
-  const { isGuest, isLoading: cartLoading } = useCart()
+  const { isGuest, userId, isLoading: cartLoading } = useCart()
 
   stepRef.current = step
 
   const persistFieldsRef = useRef({
+    userId,
     locale,
     step,
     fulfillment,
@@ -1081,7 +1091,16 @@ function CheckoutClientInner({ switches }: { switches: CheckoutSwitches }) {
     billing,
     notes,
   })
-  persistFieldsRef.current = { locale, step, fulfillment, addressId, billing, notes }
+  persistFieldsRef.current = { userId, locale, step, fulfillment, addressId, billing, notes }
+  // The account the form was restored for. A sign in or out on this tab while
+  // the page is open must not file what is on screen under another account.
+  const draftOwnerRef = useRef<string | null>(null)
+
+  const persistDraft = useCallback(() => {
+    const { userId: current, ...fields } = persistFieldsRef.current
+    if (!checkoutDraftHydratedRef.current || !current || current !== draftOwnerRef.current) return
+    saveCheckoutDraft({ userId: current, ...fields })
+  }, [])
 
   // Load saved addresses on mount (and when returning from account with a fresh session tab)
   useEffect(() => {
@@ -1141,6 +1160,7 @@ function CheckoutClientInner({ switches }: { switches: CheckoutSwitches }) {
     if (cartLoading) return
     if (checkoutDraftHydratedRef.current) return
     checkoutDraftHydratedRef.current = true
+    draftOwnerRef.current = userId
 
     let raw: string | null = null
     try {
@@ -1150,6 +1170,12 @@ function CheckoutClientInner({ switches }: { switches: CheckoutSwitches }) {
     }
     let draft = parseCheckoutDraft(raw)
     if (draft && Date.now() - draft.savedAt > CHECKOUT_DRAFT_MAX_AGE_MS) {
+      clearCheckoutDraftStorage()
+      draft = null
+    }
+    // Written by another account: the session ended without the sign out
+    // button, and this tab is now a guest or someone else.
+    if (draft && draft.userId !== userId) {
       clearCheckoutDraftStorage()
       draft = null
     }
@@ -1193,27 +1219,13 @@ function CheckoutClientInner({ switches }: { switches: CheckoutSwitches }) {
     if (nextStep === "payment" || nextStep === "review") {
       void fetchQuote({ fulfillment: restoredFulfillment, addressId: draft.addressId })
     }
-  }, [cartLoading, fetchQuote, isGuest, locale, router, searchParams, switches])
+  }, [cartLoading, fetchQuote, isGuest, locale, router, searchParams, switches, userId])
 
   // Persist checkout draft (session tab) after hydration
   useEffect(() => {
-    if (!checkoutDraftHydratedRef.current || cartLoading) return
-    const payload: CheckoutDraftV1 = {
-      v: 1,
-      locale,
-      step,
-      fulfillment,
-      addressId,
-      billing,
-      notes,
-      savedAt: Date.now(),
-    }
-    try {
-      sessionStorage.setItem(CHECKOUT_DRAFT_STORAGE_KEY, JSON.stringify(payload))
-    } catch {
-      /* private mode / quota */
-    }
-  }, [cartLoading, locale, step, fulfillment, addressId, billing, notes])
+    if (cartLoading) return
+    persistDraft()
+  }, [persistDraft, cartLoading, userId, locale, step, fulfillment, addressId, billing, notes])
 
   // Drop invalid restored address once the list is available
   useEffect(() => {
@@ -1221,30 +1233,20 @@ function CheckoutClientInner({ switches }: { switches: CheckoutSwitches }) {
     if (!addresses.some((a) => a.id === addressId)) setAddressId("")
   }, [addressId, addresses, addressesLoading])
 
+  // Signing out from this page: nothing on screen belongs to anyone any more
+  useEffect(() => {
+    const disown = () => {
+      draftOwnerRef.current = null
+    }
+    window.addEventListener(CHECKOUT_DRAFT_SIGNED_OUT_EVENT, disown)
+    return () => window.removeEventListener(CHECKOUT_DRAFT_SIGNED_OUT_EVENT, disown)
+  }, [])
+
   // Flush draft on tab close / refresh / mobile background (best-effort)
   useEffect(() => {
-    const flush = () => {
-      if (!checkoutDraftHydratedRef.current) return
-      const p = persistFieldsRef.current
-      const payload: CheckoutDraftV1 = {
-        v: 1,
-        locale: p.locale,
-        step: p.step,
-        fulfillment: p.fulfillment,
-        addressId: p.addressId,
-        billing: p.billing,
-        notes: p.notes,
-        savedAt: Date.now(),
-      }
-      try {
-        sessionStorage.setItem(CHECKOUT_DRAFT_STORAGE_KEY, JSON.stringify(payload))
-      } catch {
-        /* ignore */
-      }
-    }
-    window.addEventListener("pagehide", flush)
-    return () => window.removeEventListener("pagehide", flush)
-  }, [])
+    window.addEventListener("pagehide", persistDraft)
+    return () => window.removeEventListener("pagehide", persistDraft)
+  }, [persistDraft])
 
   // Confirm before leaving checkout via in-app links (refresh/close only saves; no blocking dialog)
   useEffect(() => {
@@ -1462,24 +1464,7 @@ function CheckoutClientInner({ switches }: { switches: CheckoutSwitches }) {
           onStay={() => setLeaveModalDestination(null)}
           onKeepAndLeave={() => {
             const dest = leaveModalDestination
-            const p = persistFieldsRef.current
-            try {
-              sessionStorage.setItem(
-                CHECKOUT_DRAFT_STORAGE_KEY,
-                JSON.stringify({
-                  v: 1,
-                  locale: p.locale,
-                  step: p.step,
-                  fulfillment: p.fulfillment,
-                  addressId: p.addressId,
-                  billing: p.billing,
-                  notes: p.notes,
-                  savedAt: Date.now(),
-                } satisfies CheckoutDraftV1),
-              )
-            } catch {
-              /* ignore */
-            }
+            persistDraft()
             router.push(dest)
             setLeaveModalDestination(null)
           }}

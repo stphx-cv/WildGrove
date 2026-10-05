@@ -1,6 +1,6 @@
 ---
 title: features
-updated: 2026-10-04
+updated: 2026-10-05
 status: current
 ---
 
@@ -68,6 +68,8 @@ El carrito funciona **sin tener cuenta**. Se guarda contra una clave de invitado
 Al pagar se elige entre recoger en el local o pedir a domicilio, y se puede programar la hora. Si es reparto, la dirección se busca con autocompletado y el sistema comprueba en qué zona cae.
 
 El dueño puede apagar la recogida o el reparto desde el panel, pero no los dos a la vez. La página de pago solo ofrece los que están encendidos, también al retomar un pago a medias, y el servidor rechaza la cotización y el pago de uno apagado. Si se apaga a mitad de un pago, la página explica el rechazo en el idioma del cliente.
+
+Un pago a medias se puede retomar. La página de pago guarda en la pestaña del navegador el paso, la entrega, la dirección elegida, el comprobante y las notas, a nombre de la cuenta que lo empezó, así que recargar o ir a añadir una dirección no pierde nada. Ese pago guardado se borra al pagar, al cerrar sesión, al cerrar la pestaña o a los 7 días, y si en esa pestaña entra otra cuenta, empieza de cero.
 
 El pedido recibe un número corto y correlativo, del tipo 412, y la pantalla y el correo de después de pagar dicen «Recibimos tu pedido», y a partir de ahí el cliente sigue su estado desde su cuenta. Cada cambio de estado queda registrado con su fecha. El cliente ve de ese historial el tipo de cada cambio y su fecha; las notas del personal y el motivo escrito en un cambio manual se quedan en el panel.
 

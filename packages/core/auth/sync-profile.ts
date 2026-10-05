@@ -3,6 +3,7 @@ import { prisma } from "@wildgrove/db"
 import { WalletService } from "../wallet/WalletService"
 import { creditInitialBalance, type InitialBalanceCredits } from "../wallet/initial-balance"
 import type { AuthUser } from "./types"
+import { isGoogleAvatarUrl } from "./google-avatar"
 
 type SyncedProfile = Awaited<ReturnType<typeof prisma.profile.update>>
 
@@ -59,7 +60,7 @@ export async function syncProfileFromAuthUser(user: AuthUser): Promise<SyncProfi
     firstName,
     lastName,
     username,
-    avatarUrl: typeof meta.avatar_url === "string" ? meta.avatar_url : null,
+    avatarUrl: isGoogleAvatarUrl(meta.avatar_url) ? meta.avatar_url : null,
     connections: identityConnections,
   }
 
@@ -95,8 +96,8 @@ export async function syncProfileFromAuthUser(user: AuthUser): Promise<SyncProfi
   }
 
   const shouldSyncAvatar =
-    typeof meta.avatar_url === "string" &&
-    (!existing.avatarUrl || existing.avatarUrl.includes("googleusercontent.com"))
+    isGoogleAvatarUrl(meta.avatar_url) &&
+    (!existing.avatarUrl || isGoogleAvatarUrl(existing.avatarUrl))
 
   const profile = await prisma.profile.update({
     where: { id: user.id },

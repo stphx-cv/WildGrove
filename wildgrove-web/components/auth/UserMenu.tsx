@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from "react"
 import { Link } from "@/i18n/routing"
+import { clearCheckoutDraftOnSignOut } from "@/components/cart/checkout-draft"
 import { useTranslations } from "next-intl"
 import {
     ArrowRightOnRectangleIcon,
@@ -57,6 +58,7 @@ export function UserMenu({ firstName, lastName, username, email, avatarUrl }: Us
     }, [open])
 
     async function handleSignOut() {
+        clearCheckoutDraftOnSignOut()
         await fetch("/api/auth/sign-out", { method: "POST" })
         setOpen(false)
         // Full navigation so CartProvider remounts as guest

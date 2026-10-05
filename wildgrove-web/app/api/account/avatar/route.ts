@@ -8,6 +8,7 @@ import { prisma } from "@wildgrove/db"
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { createServiceClient } from '@wildgrove/core/clients/admin'
+import { isGoogleAvatarUrl } from '@wildgrove/core/auth/google-avatar'
 
 const MAX_SIZE = 5 * 1024 * 1024 // 5 MB
 const ALLOWED  = ['image/jpeg', 'image/png', 'image/webp']
@@ -83,10 +84,10 @@ export async function PATCH() {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const googleAvatarUrl = user.user_metadata?.avatar_url as string | undefined
+    const googleAvatarUrl = user.user_metadata?.avatar_url
     const isGoogleUser = user.identities?.some((i: { provider: string }) => i.provider === 'google')
 
-    if (!isGoogleUser || !googleAvatarUrl) {
+    if (!isGoogleUser || !isGoogleAvatarUrl(googleAvatarUrl)) {
         return NextResponse.json({ error: 'No Google account linked.' }, { status: 400 })
     }
 

@@ -9,6 +9,7 @@ import { DatePicker } from "./DatePicker"
 import { TimePicker } from "./TimePicker"
 import { GuestsPicker } from "./GuestsPicker"
 import type { UserProfile } from "@wildgrove/core/types"
+import { isValidEmail } from "@wildgrove/core/validation"
 import { PhoneInput } from "@wildgrove/ui/PhoneInput"
 import type { ClosedTimeRange } from "@wildgrove/core/reservation-schedule"
 import { dateHasBookableTimeSlot, parseOperatingDays } from "@wildgrove/core/reservation-schedule"
@@ -248,7 +249,7 @@ export function ReservationForm({
 
         switch (field) {
             case "email":
-                if (value && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
+                if (value && !isValidEmail(value)) {
                     errors.email = t("emailError")
                 } else {
                     delete errors.email

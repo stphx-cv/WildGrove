@@ -10,6 +10,7 @@ import { useRouter } from "@/i18n/routing"
 import { useTranslations, useLocale } from "next-intl"
 import { createClient } from "@wildgrove/core/clients/client"
 import type { LinkedIdentity } from "@wildgrove/core/types"
+import { isGoogleAvatarUrl } from "@wildgrove/core/auth/google-avatar"
 import {
     CheckCircleIcon,
     EnvelopeIcon,
@@ -38,7 +39,7 @@ export function ConnectedAccounts({ linkedIdentities, currentAvatarUrl, justLink
 
     const googleIdentity      = linkedIdentities.find(i => i.provider === "google") ?? null
     const hasEmailIdentity    = linkedIdentities.some(i => i.provider === "email")
-    const isGoogleAvatarInUse = currentAvatarUrl?.includes("googleusercontent.com") ?? false
+    const isGoogleAvatarInUse = isGoogleAvatarUrl(currentAvatarUrl)
 
     const [linkStatus,          setLinkStatus]          = useState<Status>("idle")
     const [unlinkStatus,        setUnlinkStatus]        = useState<Status>("idle")

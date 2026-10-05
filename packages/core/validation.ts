@@ -16,3 +16,16 @@ export const USERNAME_REGEX = /^[a-zA-Z0-9_.-]+$/
 export const NAME_REGEX = /^[\p{L}\s'-]+$/u
 // E.164 phone format: +{country_code}{number}, 7–15 digits after "+"
 export const PHONE_REGEX = /^\+\d{7,15}$/
+
+// RFC 5321 caps a forward path at 256 octets, so an address is at most 254.
+export const EMAIL_MAX_LENGTH = 254
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+
+/**
+ * A plausible email address: something, an @, and a dotted domain. The length
+ * check runs first because the pattern backtracks quadratically on a long run
+ * of dots, and a body field has no size limit of its own.
+ */
+export function isValidEmail(value: string): boolean {
+    return value.length <= EMAIL_MAX_LENGTH && EMAIL_REGEX.test(value)
+}

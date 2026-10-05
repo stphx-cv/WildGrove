@@ -86,7 +86,7 @@ export function OrderConfirmationClient({ order }: OrderConfirmationProps) {
 
             {/* Order number badge */}
             <div className="bg-wg-accent/10 dark:bg-wg-dark-accent/10 rounded-[0.75rem] px-4 py-3 text-center mb-6">
-              <p className="text-sm text-wg-muted dark:text-wg-dark-muted mb-0.5">{t("orderNumber", { number: "" }).replace("", "")}</p>
+              <p className="text-sm text-wg-muted dark:text-wg-dark-muted mb-0.5">{t("orderNumberLabel")}</p>
               <p className="font-display text-2xl font-bold text-wg-accent dark:text-wg-dark-accent">
                 #{order.orderNumber}
               </p>
@@ -102,7 +102,7 @@ export function OrderConfirmationClient({ order }: OrderConfirmationProps) {
               </div>
               {order.deliveryAddress && (
                 <div className="flex justify-between gap-4">
-                  <span className="text-wg-muted dark:text-wg-dark-muted flex-shrink-0">Address</span>
+                  <span className="text-wg-muted dark:text-wg-dark-muted flex-shrink-0">{t("deliveryAddress")}</span>
                   <span className="text-wg-text dark:text-wg-dark-text text-right">{order.deliveryAddress}</span>
                 </div>
               )}

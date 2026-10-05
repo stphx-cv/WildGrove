@@ -29,6 +29,7 @@ import {
 import { createClient } from "@wildgrove/core/clients/client"
 import { useCurrency } from "@/components/providers/CurrencyProvider"
 import type { AuthUser as User } from '@wildgrove/core/auth/types'
+import { dropCheckoutDraftNotOwnedBy } from "@/components/cart/checkout-draft"
 
 const GUEST_CART_KEY = "wg:cart"
 const PREFERRED_CURRENCY_KEY = "wg:preferred-currency"
@@ -79,6 +80,8 @@ interface CartContextValue {
   automaticDiscountUSD: number
   isLoading: boolean
   isGuest: boolean
+  /** The signed-in user's id, or null for a guest. */
+  userId: string | null
   isDrawerOpen: boolean
   openDrawer: () => void
   closeDrawer: () => void
@@ -222,6 +225,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
           userRef.current = session.user
           setUser(session.user)
+          dropCheckoutDraftNotOwnedBy(session.user.id)
 
           await mergeGuestCartIfNeeded()
           await loadServerCart()
@@ -232,12 +236,14 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
           // No session on first load → treat as guest
           userRef.current = null
           setUser(null)
+          dropCheckoutDraftNotOwnedBy(null)
           loadGuestCart()
           setIsLoading(false)
         }
       } else if (event === "SIGNED_OUT") {
         userRef.current = null
         setUser(null)
+        dropCheckoutDraftNotOwnedBy(null)
         isMergingRef.current = false
         loadGuestCart()
         setIsLoading(false)
@@ -484,6 +490,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     automaticDiscountUSD,
     isLoading,
     isGuest,
+    userId: user?.id ?? null,
     isDrawerOpen,
     openDrawer,
     closeDrawer,
