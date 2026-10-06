@@ -1,6 +1,6 @@
 ---
 title: readme
-updated: 2026-10-05
+updated: 2026-10-06
 status: current
 ---
 
@@ -10,7 +10,7 @@ Un restaurante ficticio, construido entero como pieza de portafolio: tienda púb
 
 Está en línea y en uso. La carta, los horarios y los datos del local se editan desde el panel, no están escritos en el código.
 
-Versión actual: **p1.0.1.1** · fase `preview` · ver [Versiones](wildgrove-vault/versions/00-versions-index.md).
+Versión actual: **p1.0.1.2** · fase `preview` · ver [Versiones](wildgrove-vault/versions/00-versions-index.md).
 
 Toda la documentación está en español. Los nombres de carpetas, de archivos y todo lo que lee una máquina están en inglés.
 
@@ -132,6 +132,10 @@ Se dice aquí en lugar de llamarlo estable, porque una versión 1.0 con huecos d
 El sitio publica una superficie pensada para ser leída por máquinas: una API pública versionada, un servidor MCP, cualquier página disponible en markdown pidiéndola con `Accept: text/markdown`, y los documentos de descubrimiento que hacen falta para encontrarlo todo.
 
 Es de solo lectura. Un agente puede consultar la carta y ver si hay mesa libre, pero no puede reservar ni pedir. Está explicado en [La API](wildgrove-vault/reference/05-api.md).
+
+## Seguridad
+
+Si encuentras una vulnerabilidad, avisa en privado como explica [Seguridad](SECURITY.md), no en un issue público.
 
 ## Licencia
 
