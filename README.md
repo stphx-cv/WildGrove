@@ -1,6 +1,6 @@
 ---
 title: readme
-updated: 2026-10-06
+updated: 2026-10-08
 status: current
 ---
 
@@ -10,7 +10,7 @@ Un restaurante ficticio, construido entero como pieza de portafolio: tienda púb
 
 Está en línea y en uso. La carta, los horarios y los datos del local se editan desde el panel, no están escritos en el código.
 
-Versión actual: **p1.0.1.2** · fase `preview` · ver [Versiones](wildgrove-vault/versions/00-versions-index.md).
+Versión actual: **p1.0.2.0** · fase `preview` · ver [Versiones](wildgrove-vault/versions/00-versions-index.md).
 
 Toda la documentación está en español. Los nombres de carpetas, de archivos y todo lo que lee una máquina están en inglés.
 

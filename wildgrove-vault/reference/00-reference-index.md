@@ -1,12 +1,12 @@
 ---
 title: reference-index
-updated: 2026-10-03
+updated: 2026-10-08
 status: current
 ---
 
 # Referencia
 
-Cómo está hecho Wild Grove. Ocho documentos, pensados para leerse en este orden si es la primera vez.
+Cómo está hecho Wild Grove. Nueve documentos, pensados para leerse en este orden si es la primera vez.
 
 | | Documento | De qué va |
 |---|---|---|
@@ -18,6 +18,7 @@ Cómo está hecho Wild Grove. Ocho documentos, pensados para leerse en este orde
 | 06 | [Variables de entorno](06-environment.md) | Qué configurar y de dónde sacar cada credencial |
 | 07 | [Por qué está hecho así](07-decisions.md) | Las decisiones importantes, con la alternativa que se descartó |
 | 08 | [La voz de Wild Grove](08-brand-voice.md) | Cómo suena el texto de la tienda, los correos y Sage: trato, vocabulario, mayúsculas y lo que no se escribe |
+| 09 | [Cómo verificar un cambio en local](09-local-verification.md) | Técnicas para comprobar un cambio contra la pila local sin tocar producción: sesiones, correo, límites, navegador e imágenes de Docker |
 
 ## Si solo vas a leer uno
 

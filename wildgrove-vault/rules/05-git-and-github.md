@@ -1,6 +1,6 @@
 ---
 title: git-and-github
-updated: 2026-10-04
+updated: 2026-10-08
 status: current
 ---
 
@@ -98,6 +98,10 @@ El autor tiene que ser el propietario, y la búsqueda tiene que decir `limpio`.
 **La búsqueda va anclada al principio de línea a propósito.** Si buscara una palabra suelta saltaría con cualquier texto que la contenga, y una comprobación que da falsas alarmas todo el rato termina por ignorarse.
 
 Si algo se coló, se arregla con `git commit --amend` **antes de subirlo**, que es cuando todavía sale gratis. Se enmienda **solo el mensaje**: no se añaden archivos, no se cambia el autor. Si el commit ya está en GitHub, **para y avisa al propietario**. No se fuerza el envío.
+
+## La identidad de Git de este clon
+
+El clon tiene `user.name` y `user.email` configurados en local, y la configuración global de la máquina pertenece a otra cuenta. Quitar la identidad local haría que los commits salieran con un autor distinto. Antes de commitear, `git log -1 --format='%an <%ae>'` ya comprueba el resultado, como se explica arriba.
 
 ## Etiquetas
 

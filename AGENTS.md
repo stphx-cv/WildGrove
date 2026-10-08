@@ -1,6 +1,6 @@
 ---
 title: agents
-updated: 2026-10-03
+updated: 2026-10-08
 status: current
 ---
 
@@ -35,6 +35,7 @@ El mapa del almacén está en [`wildgrove-vault/00-wildgrove-vault-index.md`](wi
 | [Cómo versionar](wildgrove-vault/rules/04-versioning.md) | **Obligatorio al final de cada sesión** |
 | [Git y GitHub](wildgrove-vault/rules/05-git-and-github.md) | Quién firma y quién sube los cambios |
 | [Cómo se planifica un trabajo grande](wildgrove-vault/rules/06-plans.md) | Contexto, plan, aprobación, ejecución y reporte |
+| [La memoria de los agentes](wildgrove-vault/rules/07-agent-memory.md) | Dónde guarda un agente lo que aprende: dentro del proyecto, nunca en su memoria propia |
 
 Este archivo **no repite** ninguna de esas reglas. Dos copias de una regla siempre acaban diciendo cosas distintas.
 
@@ -50,6 +51,7 @@ Este archivo **no repite** ninguna de esas reglas. Dos copias de una regla siemp
 | Variables de entorno | [`wildgrove-vault/reference/06-environment.md`](wildgrove-vault/reference/06-environment.md) |
 | Por qué algo está hecho así | [`wildgrove-vault/reference/07-decisions.md`](wildgrove-vault/reference/07-decisions.md) |
 | Escribir o cambiar un texto de la tienda, un correo, un mensaje de Sage o la descripción de un plato | [`wildgrove-vault/reference/08-brand-voice.md`](wildgrove-vault/reference/08-brand-voice.md) |
+| Comprobar un cambio contra la pila local | [`wildgrove-vault/reference/09-local-verification.md`](wildgrove-vault/reference/09-local-verification.md) |
 | Un trabajo grande, pasado o planeado | [`wildgrove-vault/plans/00-plans-index.md`](wildgrove-vault/plans/00-plans-index.md) |
 | Qué cambió y cuándo | [`wildgrove-vault/versions/00-versions-index.md`](wildgrove-vault/versions/00-versions-index.md) |
 

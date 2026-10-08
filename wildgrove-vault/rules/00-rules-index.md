@@ -1,6 +1,6 @@
 ---
 title: rules-index
-updated: 2026-09-15
+updated: 2026-10-08
 status: current
 ---
 
@@ -14,6 +14,7 @@ Instrucciones para cualquier agente de IA que trabaje en este repositorio, y par
 - [Cómo versionar este proyecto](04-versioning.md) | dejar escrito cada cambio antes de cada commit.
 - [Git y GitHub](05-git-and-github.md) | la rama, quién firma y quién sube los cambios.
 - [Cómo se planifica un trabajo grande](06-plans.md) | contexto, plan, ejecución y reporte.
+- [La memoria de los agentes](07-agent-memory.md) | dónde se guarda lo que un agente aprende: dentro del proyecto.
 
 ## Esta carpeta es el único sitio donde viven las reglas
 

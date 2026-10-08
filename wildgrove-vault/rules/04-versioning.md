@@ -1,6 +1,6 @@
 ---
 title: versioning
-updated: 2026-10-04
+updated: 2026-10-08
 status: current
 ---
 
@@ -112,6 +112,8 @@ Al final de cualquier sesión que haya cambiado archivos:
 **5. Cierra la versión ANTES de commitear.** Cambia `commit: pending` por `commit: done`, y entonces `git add`.
 
 Si commiteas con la versión todavía en `pending`, el repositorio guarda para siempre una versión que afirma no haber sido subida, y corregirlo cuesta un segundo commit que solo cambia una palabra.
+
+El campo `commit:` vale únicamente `done` o `pending`. No se le añade el hash del commit: Git ya sabe qué commit lleva el archivo, y escribirlo obliga a una segunda edición después de commitear que deja el árbol sucio sin motivo.
 
 ## Los dos archivos de una versión
 
