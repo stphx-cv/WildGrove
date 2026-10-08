@@ -8,10 +8,11 @@ status: current
 
 Las versiones de la fase actual, de la más nueva a la más vieja.
 
-Versión actual: **p1.0.2.0**
+Versión actual: **p1.0.3.0**
 
 | Versión | Fecha | Qué pasó |
 |---|---|---|
+| [p1.0.3.0](p1.0.3.0/01-p1.0.3.0-changes.md) | 2026-10-08 | La caché de compilación se limpia sola y no pasa de 10 GB |
 | [p1.0.2.0](p1.0.2.0/01-p1.0.2.0-changes.md) | 2026-10-08 | Lo que un agente aprende se guarda dentro del proyecto, y hay una guía para verificar en local |
 | [p1.0.1.2](p1.0.1.2/01-p1.0.1.2-changes.md) | 2026-10-06 | El repositorio explica cómo avisar de una vulnerabilidad |
 | [p1.0.1.1](p1.0.1.1/01-p1.0.1.1-changes.md) | 2026-10-05 | Se actualizaron las dependencias de la tienda y del panel |

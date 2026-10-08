@@ -1,6 +1,8 @@
 {
   "$schema": "https://turbo.build/schema.json",
   "envMode": "loose",
+  "cacheMaxAge": "7d",
+  "cacheMaxSize": "10GB",
   "globalDependencies": [
     "**/.env",
     "**/.env.local"

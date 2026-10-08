@@ -51,4 +51,4 @@ Técnicas para comprobar un cambio contra la pila local sin tocar producción. S
 
 ## Imágenes de Docker en local
 
-Nunca ejecutes `docker build` desde la raíz del repositorio. La caché `.turbo` de la raíz pesa decenas de gigabytes y no está en el `Dockerfile.dockerignore` de las aplicaciones, así que copiar el contexto agota la máquina. Construye desde una copia limpia (`git archive HEAD`) con `--network=host`, y ejecuta con `--network host` y un archivo de entorno generado desde `.env.local` que borres después.
+Nunca ejecutes `docker build` desde la raíz del repositorio. La caché `.turbo` de la raíz puede llegar a 10 GB (es su tope) y no está en el `Dockerfile.dockerignore` de las aplicaciones, así que copiar el contexto agota la máquina. Construye desde una copia limpia (`git archive HEAD`) con `--network=host`, y ejecuta con `--network host` y un archivo de entorno generado desde `.env.local` que borres después.

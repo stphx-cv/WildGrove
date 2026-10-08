@@ -10,7 +10,7 @@
 //   node scripts/icons-inventory.mjs --similar          drawings with the same geometry that differ in fill, stroke or other attributes
 //
 // Options:  --dir <path>        folder to scan (repeatable). Default: wildgrove-web/app and wildgrove-web/components
-//           --file <path>       baseline file. Default: wildgrove-vault/private/13-shared-icons-baseline.json
+//           --file <path>       baseline file. Default: wildgrove-vault/private/icons-baseline.json
 //           --force             let --baseline overwrite an existing file
 //           --verbose           print every difference instead of the first few
 //
@@ -61,7 +61,7 @@ import { execFileSync, execSync } from "node:child_process"
 const ROOT = path.resolve(import.meta.dirname, "..")
 const ICONS_DIR = path.join(ROOT, "packages", "ui", "icons")
 const DEFAULT_DIRS = ["wildgrove-web/app", "wildgrove-web/components"]
-const DEFAULT_BASELINE = "wildgrove-vault/private/13-shared-icons-baseline.json"
+const DEFAULT_BASELINE = "wildgrove-vault/private/icons-baseline.json"
 const SKIP_DIRS = new Set(["node_modules", ".next", ".turbo", "dist"])
 const SOURCE_FILE = /\.(tsx|jsx|ts|js|mjs)$/
 
